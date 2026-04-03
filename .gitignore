@@ -3,6 +3,7 @@ backend_fastapi/venv/
 __pycache__/
 *.pyc
 .env
+backend_fastapi/uploads/
 
 .gradle/
 dental_classification/.gradle/
