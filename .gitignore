@@ -1,0 +1,12 @@
+venv/
+backend_fastapi/venv/
+__pycache__/
+*.pyc
+.env
+
+.gradle/
+dental_classification/.gradle/
+build/
+dental_classification/build/
+
+.vscode/

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "62817471299",
+    "project_id": "dental-classification",
+    "storage_bucket": "dental-classification.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:62817471299:android:3e6aef80c7f22c4650bdf6",
+        "android_client_info": {
+          "package_name": "com.example.dental_classification"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAK2m8H2q8ikdzn3LRapA6hWFMS5LvAGQ0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

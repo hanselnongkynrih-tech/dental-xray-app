@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <!-- Replace this with your API's domain or local IPv4 address -->
+        <domain includeSubdomains="true">your-api-domain.com</domain>
+    </domain-config>
+</network-security-config>
