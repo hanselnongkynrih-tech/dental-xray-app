@@ -120,6 +120,7 @@ lab_results = Table(
     "lab_results",
     metadata,
     Column("id", Integer, primary_key=True),
+    Column("image_id", Integer, ForeignKey("images.id")),  # ✅ ADD THIS
     Column("lab_user_id", Integer, ForeignKey("users.id")),
     Column("patient_user_id", Integer, ForeignKey("users.id")),
     Column("doctor_user_id", Integer, ForeignKey("users.id")),

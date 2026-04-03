@@ -42,11 +42,12 @@ async def upload_lab_result(
 
     # 🔥 insert lab result
     insert_query = lab_results.insert().values(
-        lab_user_id=current_user.id,
-        patient_user_id=image["user_id"],
-        doctor_user_id=image["doctor_user_id"],
-        file_path=str(file_path)
-    )
+    image_id=image_id,  # ✅ LINK TO IMAGE
+    lab_user_id=current_user.id,
+    patient_user_id=image["user_id"],
+    doctor_user_id=image["doctor_user_id"],
+    file_path=f"uploads/lab/{filename}"  # ✅ FIX PATH
+)
 
     result_id = await database.execute(insert_query)
 
@@ -109,17 +110,18 @@ async def get_lab_results_full(
         raise HTTPException(status_code=403, detail="Only doctor allowed")
 
     query = """
-    SELECT 
+SELECT 
     i.id AS image_id,
-    i.user_id AS patient_user_id,   -- ✅ ADD THIS LINE
+    i.user_id AS patient_user_id,
     u.full_name AS patient_name,
     pp.token_number,
+    i.image_path,
     lr.file_path,
     i.status
     FROM images i
     JOIN users u ON i.user_id = u.id
     LEFT JOIN patient_profiles pp ON pp.user_id = u.id
-    LEFT JOIN lab_results lr ON lr.patient_user_id = i.user_id
+    LEFT JOIN lab_results lr ON lr.image_id = i.id   -- ✅ FIXED
     WHERE i.doctor_user_id = :doctor_id
     """
 

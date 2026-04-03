@@ -83,9 +83,9 @@ class _DoctorImagesScreenState extends State<DoctorImagesScreen> {
           return Card(
             margin: const EdgeInsets.all(10),
             child: ListTile(
-              leading: img['file_path'] != null
+              leading: img['image_path'] != null
                   ? Image.network(
-                getImageUrl(img['file_path']),
+                getImageUrl(img['image_path']),
                 width: 60,
                 height: 60,
                 fit: BoxFit.cover,
@@ -110,7 +110,7 @@ class _DoctorImagesScreenState extends State<DoctorImagesScreen> {
                     context: context,
                     builder: (_) => Dialog(
                       child: Image.network(
-                        getImageUrl(img['result_path'] ?? ''),
+                        getImageUrl(img['file_path'] ?? ''),
                         fit: BoxFit.cover,
                       ),
                     ),

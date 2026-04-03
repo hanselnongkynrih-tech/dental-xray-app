@@ -38,6 +38,9 @@ async def upload_image(
         with open(file_location, "wb") as f:
             f.write(await file.read())
 
+        # ✅ ADD THIS LINE (IMPORTANT)
+        image_path = f"uploads/{file_name}"
+
         # ✅ TEMP: Assign doctor
         doctor_id = 2  # your doctor id
 
@@ -54,7 +57,7 @@ async def upload_image(
             "user_id": current_user.id,
             "doctor_id": doctor_id,
             "lab_id": lab_id,
-            "image_path": str(file_location),
+            "image_path": image_path,
             "status": "uploaded",
             "assigned_to": "lab"
             }
@@ -62,7 +65,7 @@ async def upload_image(
 
         return {
             "message": "Upload successful",
-            "file_path": str(file_location)
+            "file_path": image_path
         }
 
     except Exception as e:
