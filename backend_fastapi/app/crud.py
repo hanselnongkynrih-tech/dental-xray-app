@@ -144,11 +144,9 @@ async def get_lab_results_for_doctor(doctor_id: int):
     return [dict(row) for row in rows]
 
 # ========== ********* Token Generation ********** =========== 
-from datetime import date
+from datetime import datetime, timedelta
 
 async def generate_token_for_patient(user_id: int):
-
-    today = date.today()
 
     # get patient
     patient = await get_patient_profile_by_user_id(user_id)
@@ -156,22 +154,29 @@ async def generate_token_for_patient(user_id: int):
     if not patient:
         return None
 
-    # if token already exists today → keep it
-    if patient["token_date"] == today:
-        return patient["token_number"]
+    doctor_id = patient["doctor_user_id"]
 
-    # 🔥 get max token today
+    # ✅ 2 AM RESET LOGIC
+    now = datetime.utcnow()
+    adjusted_time = now - timedelta(hours=2)
+    today = adjusted_time.date()
+
+    # 🔥 get max token for THIS DOCTOR TODAY
     query = """
     SELECT MAX(token_number) as max_token
     FROM patient_profiles
     WHERE token_date = :today
+    AND doctor_user_id = :doctor_id
     """
 
-    row = await database.fetch_one(query=query, values={"today": today})
+    row = await database.fetch_one(
+        query=query,
+        values={"today": today, "doctor_id": doctor_id}
+    )
 
     next_token = (row["max_token"] or 0) + 1
 
-    # update patient
+    # update patient with new token
     update_query = patient_profiles.update().where(
         patient_profiles.c.user_id == user_id
     ).values(

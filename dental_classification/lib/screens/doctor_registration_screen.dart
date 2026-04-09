@@ -61,6 +61,34 @@ class _DoctorRegistrationScreenState extends State<DoctorRegistrationScreen> {
     _DayAvailability('Sun'),
   ];
 
+  // ===============================
+  // 🔥 ADD THIS (NEW VARIABLES)
+  // ===============================
+  String? selectedQualification;
+  String? selectedSpecialization;
+
+  final List<String> qualifications = ["BDS", "MDS"];
+
+  final List<String> bdsSpecializations = [
+    "Implantology",
+    "Aesthetic & Cosmetic Dentistry",
+    "Laser Dentistry",
+    "Rotary Endodontics",
+    "Forensic Odontology",
+  ];
+
+  final List<String> mdsSpecializations = [
+    "Prosthodontics and Crown & Bridge",
+    "Periodontology",
+    "Oral & Maxillofacial Surgery",
+    "Conservative Dentistry & Endodontics",
+    "Orthodontics & Dentofacial Orthopaedics",
+    "Oral Pathology & Microbiology",
+    "Public Health Dentistry",
+    "Pediatric & Preventive Dentistry",
+    "Oral Medicine & Radiology",
+  ];
+
   bool _isLoading = false;
   String? _errorMessage;
 
@@ -81,8 +109,8 @@ class _DoctorRegistrationScreenState extends State<DoctorRegistrationScreen> {
     super.dispose();
   }
 
-  String? _required(String? v) =>
-      (v == null || v.trim().isEmpty) ? 'Required' : null;
+  /*String? _required(String? v) =>
+      (v == null || v.trim().isEmpty) ? 'Required' : null;*/
 
   String _timeOfDayToString(TimeOfDay t) {
     final h = t.hour.toString().padLeft(2, '0');
@@ -166,17 +194,17 @@ class _DoctorRegistrationScreenState extends State<DoctorRegistrationScreen> {
         'clinic_address': _clinicAddressController.text.trim().isEmpty
             ? null
             : _clinicAddressController.text.trim(),
-        'specialization': _specializationController.text.trim().isEmpty
-            ? null
-            : _specializationController.text.trim(),
+        // ===============================
+        // 🔥 USE DROPDOWN VALUES
+        // ===============================
+        'specialization': selectedSpecialization,
+        'qualification': selectedQualification,
         'years_of_experience': yearsExp,
         'dci_registration_number':
         _dciRegNoController.text.trim().isEmpty
             ? null
             : _dciRegNoController.text.trim(),
-        'qualification': _qualificationController.text.trim().isEmpty
-            ? null
-            : _qualificationController.text.trim(),
+
         'consultation_fee_online': feeOnline,
         'consultation_fee_offline': feeOffline,
         'dci_certificate_path': null,
@@ -285,13 +313,16 @@ class _DoctorRegistrationScreenState extends State<DoctorRegistrationScreen> {
                     const SizedBox(height: 12),
                   ],
 
+                  // ===============================
+                  // 🔥 FIX CLINIC NAME (READ ONLY)
+                  // ===============================
                   TextFormField(
-                    controller: _clinicNameController,
+                    initialValue: "Dental Care Clinic",
+                    readOnly: true,
                     decoration: const InputDecoration(
                       labelText: 'Clinic Name',
                       border: OutlineInputBorder(),
                     ),
-                    validator: _required,
                   ),
                   const SizedBox(height: 12),
                   TextFormField(
@@ -303,13 +334,35 @@ class _DoctorRegistrationScreenState extends State<DoctorRegistrationScreen> {
                     maxLines: 2,
                   ),
                   const SizedBox(height: 12),
-                  TextFormField(
-                    controller: _specializationController,
+                  // ===============================
+                  // 🔥 DYNAMIC SPECIALIZATION DROPDOWN
+                  // ===============================
+                  DropdownButtonFormField<String>(
+                    initialValue: selectedSpecialization,
                     decoration: const InputDecoration(
                       labelText: 'Specialization',
                       border: OutlineInputBorder(),
                     ),
+                    items: (selectedQualification == "BDS"
+                        ? bdsSpecializations
+                        : selectedQualification == "MDS"
+                        ? mdsSpecializations
+                        : <String>[]) // 🔥 IMPORTANT FIX
+                        .map<DropdownMenuItem<String>>((spec) {
+                      return DropdownMenuItem<String>(
+                        value: spec,
+                        child: Text(spec),
+                      );
+                    }).toList(),
+                    onChanged: selectedQualification == null
+                        ? null
+                        : (value) {
+                      setState(() {
+                        selectedSpecialization = value;
+                      });
+                    },
                   ),
+
                   const SizedBox(height: 12),
                   TextFormField(
                     controller: _yearsExpController,
@@ -328,13 +381,30 @@ class _DoctorRegistrationScreenState extends State<DoctorRegistrationScreen> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  TextFormField(
-                    controller: _qualificationController,
+                  // ===============================
+                  // 🔥 QUALIFICATION DROPDOWN
+                  // ===============================
+                  DropdownButtonFormField<String>(
+                    initialValue: selectedQualification,
                     decoration: const InputDecoration(
                       labelText: 'Qualification',
                       border: OutlineInputBorder(),
                     ),
+                    items: qualifications.map((q) {
+                      return DropdownMenuItem(
+                        value: q,
+                        child: Text(q),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        selectedQualification = value;
+                        selectedSpecialization = null; // reset specialization
+                      });
+                    },
                   ),
+
+                  const SizedBox(height: 12),
                   const SizedBox(height: 12),
                   Row(
                     children: [
