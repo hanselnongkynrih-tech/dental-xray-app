@@ -334,6 +334,31 @@ class _DoctorRegistrationScreenState extends State<DoctorRegistrationScreen> {
                     maxLines: 2,
                   ),
                   const SizedBox(height: 12),
+
+                  // ===============================
+                  // 🔥 QUALIFICATION DROPDOWN
+                  // ===============================
+                  DropdownButtonFormField<String>(
+                    initialValue: selectedQualification,
+                    decoration: const InputDecoration(
+                      labelText: 'Qualification',
+                      border: OutlineInputBorder(),
+                    ),
+                    items: qualifications.map((q) {
+                      return DropdownMenuItem(
+                        value: q,
+                        child: Text(q),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        selectedQualification = value;
+                        selectedSpecialization = null; // reset specialization
+                      });
+                    },
+                  ),
+
+                  const SizedBox(height: 12),
                   // ===============================
                   // 🔥 DYNAMIC SPECIALIZATION DROPDOWN
                   // ===============================
@@ -381,30 +406,7 @@ class _DoctorRegistrationScreenState extends State<DoctorRegistrationScreen> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  // ===============================
-                  // 🔥 QUALIFICATION DROPDOWN
-                  // ===============================
-                  DropdownButtonFormField<String>(
-                    initialValue: selectedQualification,
-                    decoration: const InputDecoration(
-                      labelText: 'Qualification',
-                      border: OutlineInputBorder(),
-                    ),
-                    items: qualifications.map((q) {
-                      return DropdownMenuItem(
-                        value: q,
-                        child: Text(q),
-                      );
-                    }).toList(),
-                    onChanged: (value) {
-                      setState(() {
-                        selectedQualification = value;
-                        selectedSpecialization = null; // reset specialization
-                      });
-                    },
-                  ),
 
-                  const SizedBox(height: 12),
                   const SizedBox(height: 12),
                   Row(
                     children: [
