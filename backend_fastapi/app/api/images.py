@@ -41,31 +41,55 @@ async def upload_image(
         # ✅ ADD THIS LINE (IMPORTANT)
         image_path = f"uploads/{file_name}"
 
-        # ✅ TEMP: Assign doctor
-        doctor_id = 2  # your doctor id
+        # ✅ Get doctor and lab assignment for this patient
+        patient = await database.fetch_one(
+        query="""
+            SELECT doctor_user_id, lab_user_id
+            FROM patient_profiles
+            WHERE user_id = :user_id
+            """,
+            values={"user_id": current_user.id}
+            )
 
-        # TEMP: Assign lab
-        lab_id = 5  # your lab id
+        if not patient:
+                raise HTTPException(status_code=404, detail="Patient profile not found")
+
+        doctor_id = patient["doctor_user_id"]
+        lab_id = patient["lab_user_id"]
 
         # ✅ Insert into DB
+        image_id = await database.execute(
+        query="""
+                INSERT INTO images (user_id, doctor_user_id, lab_user_id, image_path, status, assigned_to)
+                VALUES (:user_id, :doctor_id, :lab_id, :image_path, :status, :assigned_to)
+                RETURNING id
+            """,
+            values={
+                "user_id": current_user.id,
+                "doctor_id": doctor_id,
+                "lab_id": lab_id,
+                "image_path": image_path,
+                "status": "uploaded",
+                "assigned_to": "lab"
+            }
+        )
+
+        # ✅ REPORT CREATION
         await database.execute(
         query="""
-        INSERT INTO images (user_id, doctor_user_id, lab_user_id, image_path, status, assigned_to)
-        VALUES (:user_id, :doctor_id, :lab_id, :image_path, :status, :assigned_to)
-        """,
-        values={
-            "user_id": current_user.id,
-            "doctor_id": doctor_id,
-            "lab_id": lab_id,
-            "image_path": image_path,
-            "status": "uploaded",
-            "assigned_to": "lab"
+        INSERT INTO diagnosis_reports (image_id, status)
+         VALUES (:image_id, :status)
+            """,
+            values={
+                "image_id": image_id,
+                "status": "pending"
             }
         )
 
         return {
             "message": "Upload successful",
-            "file_path": image_path
+            "file_path": image_path,
+            "image_id": image_id
         }
 
     except Exception as e:
@@ -159,6 +183,31 @@ async def get_lab_images(
     rows = await database.fetch_all(
         query=query,
         values={"lab_id": lab_id}
+    )
+
+    return [dict(row) for row in rows]
+
+# ===============================
+# ✅ GET REPORT
+# ===============================
+@router.get("/my-reports")
+async def get_my_reports(current_user: UserOut = Depends(get_current_user)):
+
+    query = """
+    SELECT 
+        i.id AS image_id,
+        i.image_path,
+        d.status,
+        d.result,
+        d.confidence
+    FROM images i
+    JOIN diagnosis_reports d ON i.id = d.image_id
+    WHERE i.user_id = :user_id
+    """
+
+    rows = await database.fetch_all(
+        query=query,
+        values={"user_id": current_user.id}
     )
 
     return [dict(row) for row in rows]

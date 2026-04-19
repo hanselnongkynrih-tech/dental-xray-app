@@ -1,4 +1,5 @@
-from sqlalchemy import Table, Column, Integer, String, ForeignKey, Float, JSON, Date
+from sqlalchemy import DateTime, Table, Column, Integer, String, ForeignKey, Float, JSON, Date
+from datetime import datetime  # make sure this exists at top
 from .database import metadata
 
 users = Table(
@@ -46,6 +47,9 @@ patient_profiles = Table(
 
     # 🔥 doctor assignment
     Column("doctor_user_id", Integer, ForeignKey("users.id"), nullable=True),
+
+    # 🔥 lab assignment
+    Column("lab_user_id", Integer, ForeignKey("users.id"), nullable=True),
 
     Column("age", Integer, nullable=True),
     Column("gender", String, nullable=True),
@@ -125,4 +129,33 @@ lab_results = Table(
     Column("patient_user_id", Integer, ForeignKey("users.id")),
     Column("doctor_user_id", Integer, ForeignKey("users.id")),
     Column("file_path", String, nullable=False),
+)
+
+files = Table(
+    "files",
+    metadata,
+    Column("id", Integer, primary_key=True),
+    Column("filename", String, nullable=False),
+    Column("filepath", String, nullable=False),
+    Column("filetype", String, nullable=True),
+    Column("uploaded_by", Integer, ForeignKey("users.id")),
+    Column("uploaded_at", DateTime),
+)
+
+diagnosis_reports = Table(
+    "diagnosis_reports",
+    metadata,
+
+    Column("id", Integer, primary_key=True, index=True),
+
+    Column("image_id", Integer, ForeignKey("images.id")),
+
+    Column("result", String, nullable=True),
+    Column("confidence", Float, nullable=True),
+
+    Column("doctor_comment", String, nullable=True),
+
+    Column("status", String, default="pending"),  # pending → completed → reviewed
+
+    Column("created_at", DateTime, default=datetime.utcnow)
 )
