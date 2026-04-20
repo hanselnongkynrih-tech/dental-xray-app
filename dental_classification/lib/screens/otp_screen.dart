@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import '../services/firebase_auth_service.dart';
 import '../api/api_client.dart';
+import '../screens/dashboard_screen.dart';
+
 
 class OtpScreen extends StatefulWidget {
   final String mobileNumber;
@@ -65,7 +67,7 @@ class _OtpScreenState extends State<OtpScreen> {
       if (!mounted) return;
 
       if (user == null || user['role'] == null) {
-        Navigator.pushReplacementNamed(context, '/home');
+        Navigator.pushReplacementNamed(context, '/welcome');
         return;
       }
 
@@ -81,46 +83,63 @@ class _OtpScreenState extends State<OtpScreen> {
 
         if (!mounted) return;
 
-        Navigator.pushReplacementNamed(
-          context,
-          profile == null
-              ? '/doctor_registration'
-              : '/doctor_dashboard',
-        );
+        if (profile == null) {
+          Navigator.pushReplacementNamed(context, '/doctor_registration');
+        } else {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (_) => DashboardScreen(role: 'doctor'),
+            ),
+          );
+        }
 
       } else if (role == 'patient') {
         final profile = await api.getPatientProfile(userId);
 
         if (!mounted) return;
 
-        Navigator.pushReplacementNamed(
-          context,
-          profile == null
-              ? '/patient_registration'
-              : '/patient_dashboard',
-        );
+        if (profile == null) {
+          Navigator.pushReplacementNamed(context, '/patient_registration');
+        } else {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (_) => DashboardScreen(role: 'patient'),
+            ),
+          );
+        }
 
       } else if (role == 'lab') {
         final profile = await api.getLabProfile(userId);
 
         if (!mounted) return;
 
-        Navigator.pushReplacementNamed(
-          context,
-          profile == null
-              ? '/lab_registration'
-              : '/lab_dashboard',
-        );
+        if (profile == null) {
+          Navigator.pushReplacementNamed(context, '/lab_registration');
+        } else {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (_) => DashboardScreen(role: 'lab'),
+            ),
+          );
+        }
 
       } else if (role == 'admin') {
         if (!mounted) return;
 
-        Navigator.pushReplacementNamed(context, '/admin_dashboard');
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => DashboardScreen(role: 'admin'),
+          ),
+        );
 
       } else {
         if (!mounted) return;
 
-        Navigator.pushReplacementNamed(context, '/home');
+        Navigator.pushReplacementNamed(context, '/welcome');
       }
 
     } catch (e) {

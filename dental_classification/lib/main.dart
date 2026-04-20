@@ -41,6 +41,7 @@ class DentalClassificationApp extends StatelessWidget {
       title: "Dental Classifier",
 
       theme: ThemeData(
+        brightness: Brightness.light,
         primaryColor: Colors.blue,
         scaffoldBackgroundColor: const Color(0xFFF4F6FA),
 
@@ -52,11 +53,9 @@ class DentalClassificationApp extends StatelessWidget {
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
           fillColor: Colors.white,
-
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
           ),
-
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 16,
             vertical: 14,
@@ -64,7 +63,28 @@ class DentalClassificationApp extends StatelessWidget {
         ),
       ),
 
-      initialRoute: '/welcome',
+      darkTheme: ThemeData(
+        brightness: Brightness.dark,
+        primaryColor: Colors.blue,
+        scaffoldBackgroundColor: const Color(0xFF121212),
+
+        appBarTheme: const AppBarTheme(
+          elevation: 0,
+          backgroundColor: Colors.black,
+        ),
+
+        inputDecorationTheme: InputDecorationTheme(
+          filled: true,
+          fillColor: const Color(0xFF1E1E1E),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      ),
+
+      themeMode: ThemeMode.system,
+
+      initialRoute: '/',
 
       routes: {
 

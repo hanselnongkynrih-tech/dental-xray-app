@@ -187,7 +187,7 @@ async def get_lab_images(
 
     return [dict(row) for row in rows]
 
-# ===============================
+    # ===============================
 # ✅ GET REPORT
 # ===============================
 @router.get("/my-reports")
@@ -211,3 +211,31 @@ async def get_my_reports(current_user: UserOut = Depends(get_current_user)):
     )
 
     return [dict(row) for row in rows]
+
+# ===============================
+# ✅ REPORT UPDATION
+# ===============================
+@router.post("/update-report")
+async def update_report(
+    image_id: int,
+    result: str,
+    confidence: float
+):
+    query = """
+    UPDATE diagnosis_reports
+    SET result = :result,
+        confidence = :confidence,
+        status = 'completed'
+    WHERE image_id = :image_id
+    """
+
+    await database.execute(
+        query=query,
+        values={
+            "image_id": image_id,
+            "result": result,
+            "confidence": confidence
+        }
+    )
+
+    return {"message": "Report updated successfully"}

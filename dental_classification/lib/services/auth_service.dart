@@ -99,4 +99,9 @@ class AuthService {
     final value = await _storage.read(key: key);
     return value == 'true';
   }
+
+  Future<bool> isLoggedIn() async {
+    final token = await getToken();
+    return token != null;
+  }
 }
