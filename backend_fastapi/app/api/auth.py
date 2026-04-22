@@ -46,7 +46,8 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
     return {
         "message": "Password verified. OTP sent to registered mobile.",
         "mobile_number": user.mobile_number,
-        "dev_otp": otp  # ⚠ REMOVE IN PRODUCTION
+        "role": user.role,   # 🔥 ADD THIS LINE
+        "dev_otp": otp
     }
 
 
@@ -74,7 +75,10 @@ async def verify_otp_login(data: OTPVerifyRequest):
         )
 
     access_token = create_access_token(
-        data={"sub": user.mobile_number}
+    data={
+            "sub": user.mobile_number,
+            "role": user.role   # 🔥 ADD THIS
+        }
     )
 
     return {
@@ -96,6 +100,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> UserOut:
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         mobile_number: str = payload.get("sub")
+        role: str = payload.get("role") 
 
         if mobile_number is None:
             raise credentials_exception
@@ -105,7 +110,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> UserOut:
         if user is None:
             raise credentials_exception
 
-        return UserOut.from_orm(user)
+        return UserOut.from_orm(user) 
 
     except JWTError:
         raise credentials_exception
@@ -118,6 +123,7 @@ from pydantic import BaseModel
 
 class FirebaseLoginRequest(BaseModel):
     mobile_number: str
+    role: str   # 🔥 ADD THIS LINE
 
 
 @router.post("/firebase-login")
@@ -147,7 +153,10 @@ async def firebase_login(data: FirebaseLoginRequest):
 
     # ✅ CREATE TOKEN
     access_token = create_access_token(
-        data={"sub": user.mobile_number}
+    data={
+        "sub": user.mobile_number,
+        "role": user.role   # 🔥 ADD THIS
+        }
     )
 
     db.close()
@@ -157,12 +166,4 @@ async def firebase_login(data: FirebaseLoginRequest):
         "token_type": "bearer"
     }
 
-    # 🔥 Create JWT (same as normal login)
-    access_token = create_access_token(
-        data={"sub": user.mobile_number}
-    )
-
-    return {
-        "access_token": access_token,
-        "token_type": "bearer"
-    }
+    

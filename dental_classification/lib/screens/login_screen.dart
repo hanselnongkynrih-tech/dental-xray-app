@@ -54,6 +54,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
       final response = await authService.login(backendPhone, password);
 
+      //DEBUG
+      debugPrint("BACKEND RESPONSE: $response"); // 👈 ADD HERE
+
       if (response == null || !response.containsKey("mobile_number")) {
         setState(() {
           _errorMessage = "Invalid mobile number or password";
@@ -71,10 +74,17 @@ class _LoginScreenState extends State<LoginScreen> {
         onCodeSent: () {
           if (!mounted) return;
 
+          // 1. Get the role from the backend response
+          final String userRole = response['role'] ?? 'patient';
+
           Navigator.pushNamed(
             context,
             '/otp',
-            arguments: backendPhone,
+            // 2. CHANGE: Send the Map here
+            arguments: {
+              'mobileNumber': backendPhone,
+              'role': userRole,
+            },
           );
         },
 

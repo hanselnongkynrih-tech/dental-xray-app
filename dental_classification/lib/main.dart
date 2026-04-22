@@ -14,15 +14,14 @@ import 'screens/doctor_profile_screen.dart';
 import 'screens/patient_profile_screen.dart';
 import 'screens/lab_profile_screen.dart';
 
-import 'screens/doctor_dashboard_screen.dart';
-import 'screens/patient_dashboard_screen.dart';
-import 'screens/lab_dashboard_screen.dart';
 
 import 'screens/otp_screen.dart';
 
 import 'screens/admin_dashboard_screen.dart';
 
 import 'screens/splash_screen.dart';
+
+import 'screens/dashboard_screen.dart';
 
 
 
@@ -117,26 +116,23 @@ class DentalClassificationApp extends StatelessWidget {
         '/lab_profile': (context) =>
         const LabProfileScreen(),
 
-        '/doctor_dashboard': (context) =>
-        const DoctorDashboardScreen(),
-
-        '/patient_dashboard': (context) =>
-        const PatientDashboardScreen(),
-
-        '/lab_dashboard': (context) =>
-        const LabDashboardScreen(),
+        '/dashboard': (context) {
+          final role = ModalRoute.of(context)!.settings.arguments as String;
+          return DashboardScreen(role: role);
+        },
 
         '/admin_dashboard': (context) =>
         const AdminDashboardScreen(),
 
 
         '/otp': (context) {
+          // ✅ Extract the Map instead of a String
+          final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
 
-          final mobile =
-          ModalRoute.of(context)!.settings.arguments as String;
-
-          return OtpScreen(mobileNumber: mobile);
-
+          return OtpScreen(
+            mobileNumber: args['mobileNumber'],
+            role: args['role'],
+          );
         },
       },
     );

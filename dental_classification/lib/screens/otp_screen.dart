@@ -2,14 +2,12 @@ import 'package:flutter/material.dart';
 
 import '../services/auth_service.dart';
 import '../services/firebase_auth_service.dart';
-import '../api/api_client.dart';
-import '../screens/dashboard_screen.dart';
-
 
 class OtpScreen extends StatefulWidget {
   final String mobileNumber;
+  final String role;
 
-  const OtpScreen({super.key, required this.mobileNumber});
+  const OtpScreen({super.key, required this.mobileNumber, required this.role});
 
   @override
   State<OtpScreen> createState() => _OtpScreenState();
@@ -47,7 +45,7 @@ class _OtpScreenState extends State<OtpScreen> {
         return;
       }
 
-      // STEP 2: Backend OTP Verification
+      /// STEP 2: Backend OTP Verification
       final backendSuccess = await _authService.verifyOtp(
         widget.mobileNumber,
         otp,
@@ -61,85 +59,10 @@ class _OtpScreenState extends State<OtpScreen> {
         return;
       }
 
-      // STEP 3: Get current user
-      final user = await _authService.getCurrentUser();
-
-      if (!mounted) return;
-
-      if (user == null || user['role'] == null) {
-        Navigator.pushReplacementNamed(context, '/welcome');
-        return;
-      }
-
-      final role = (user['role'] as String).toLowerCase();
-      final userId = user['id'];
-
-      final api = ApiClient();
-
-      // STEP 4: Role-based navigation
-
-      if (role == 'doctor') {
-        final profile = await api.getDoctorProfile(userId);
-
-        if (!mounted) return;
-
-        if (profile == null) {
-          Navigator.pushReplacementNamed(context, '/doctor_registration');
-        } else {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (_) => DashboardScreen(role: 'doctor'),
-            ),
-          );
-        }
-
-      } else if (role == 'patient') {
-        final profile = await api.getPatientProfile(userId);
-
-        if (!mounted) return;
-
-        if (profile == null) {
-          Navigator.pushReplacementNamed(context, '/patient_registration');
-        } else {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (_) => DashboardScreen(role: 'patient'),
-            ),
-          );
-        }
-
-      } else if (role == 'lab') {
-        final profile = await api.getLabProfile(userId);
-
-        if (!mounted) return;
-
-        if (profile == null) {
-          Navigator.pushReplacementNamed(context, '/lab_registration');
-        } else {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (_) => DashboardScreen(role: 'lab'),
-            ),
-          );
-        }
-
-      } else if (role == 'admin') {
-        if (!mounted) return;
-
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (_) => DashboardScreen(role: 'admin'),
-          ),
-        );
-
-      } else {
-        if (!mounted) return;
-
-        Navigator.pushReplacementNamed(context, '/welcome');
+      // 🔥 THIS IS THE KEY PART TO ADD/UPDATE:
+      // If backend verification is successful, use the role passed from Login
+      if (mounted) {
+        _navigateToDashboard(widget.role);
       }
 
     } catch (e) {
@@ -148,6 +71,15 @@ class _OtpScreenState extends State<OtpScreen> {
         _isLoading = false;
       });
     }
+  }
+
+  void _navigateToDashboard(String role) {
+    Navigator.pushNamedAndRemoveUntil(
+      context,
+      '/dashboard',
+          (route) => false, // This clears the navigation history
+      arguments: role,
+    );
   }
 
   @override
