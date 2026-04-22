@@ -146,14 +146,27 @@ async def delete_image(
 @router.post("/send-to-lab")
 async def send_to_lab(
     image_id: int,
-    lab_id: int,
+    lab_user_id: int,   # ✅ changed
     current_user: UserOut = Depends(get_current_user)
 ):
     if current_user.role != "doctor":
         raise HTTPException(status_code=403, detail="Only doctors can send to lab")
 
+    # 🔥 Validate lab user exists AND is actually a lab
+    lab_user = await database.fetch_one(
+        query="""
+        SELECT id FROM users
+        WHERE id = :lab_user_id AND role = 'lab'
+        """,
+        values={"lab_user_id": lab_user_id}
+    )
+
+    if not lab_user:
+        raise HTTPException(status_code=400, detail="Invalid lab user")
+
+    # 🔥 Update image
     query = images.update().where(images.c.id == image_id).values(
-        lab_user_id=lab_id,
+        lab_user_id=lab_user_id,
         assigned_to="lab",
         status="sent_to_lab"
     )
@@ -239,3 +252,19 @@ async def update_report(
     )
 
     return {"message": "Report updated successfully"}
+
+# ===============================
+@router.get("/labs")
+async def get_labs():
+    query = """
+    SELECT 
+        u.id AS user_id,
+        u.full_name,
+        lp.lab_name
+    FROM users u
+    JOIN lab_profiles lp ON u.id = lp.user_id
+    WHERE u.role = 'lab'
+    """
+
+    rows = await database.fetch_all(query)
+    return [dict(row) for row in rows]

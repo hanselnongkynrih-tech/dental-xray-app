@@ -22,6 +22,9 @@ import 'screens/otp_screen.dart';
 
 import 'screens/admin_dashboard_screen.dart';
 
+import 'screens/splash_screen.dart';
+
+
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized(); // ✅ IMPORTANT
@@ -88,7 +91,7 @@ class DentalClassificationApp extends StatelessWidget {
 
       routes: {
 
-        '/': (context) => const WelcomeScreen(),
+        '/': (context) => const SplashScreen(),
         '/welcome': (context) => const WelcomeScreen(),
         '/login': (context) => const LoginScreen(),
 

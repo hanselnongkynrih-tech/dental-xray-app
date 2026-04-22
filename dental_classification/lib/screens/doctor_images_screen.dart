@@ -23,6 +23,8 @@ class _DoctorImagesScreenState extends State<DoctorImagesScreen> {
 
   List images = [];
   bool isLoading = true;
+  List<dynamic> labs = [];
+  int? selectedLabUserId;
 
   int? doctorId;
 
@@ -30,6 +32,7 @@ class _DoctorImagesScreenState extends State<DoctorImagesScreen> {
   void initState() {
     super.initState();
     loadImages();
+    fetchLabs();
   }
 
   Future<void> loadImages() async {
@@ -55,6 +58,13 @@ class _DoctorImagesScreenState extends State<DoctorImagesScreen> {
     setState(() {
       images = filtered;
       isLoading = false;
+    });
+  }
+
+  Future<void> fetchLabs() async {
+    final data = await _apiClient.getLabs();
+    setState(() {
+      labs = data;
     });
   }
 
@@ -99,6 +109,24 @@ class _DoctorImagesScreenState extends State<DoctorImagesScreen> {
                 children: [
                   Text("Token: ${img['token_number'] ?? '-'}"),
                   Text("Status: ${img['status']}"),
+
+                  const SizedBox(height: 8),
+
+                  DropdownButtonFormField<int>(
+                    hint: const Text("Select Lab"),
+                    value: selectedLabUserId,
+                    items: labs.map<DropdownMenuItem<int>>((lab) {
+                      return DropdownMenuItem(
+                        value: lab["user_id"], // ✅ IMPORTANT
+                        child: Text(lab["lab_name"]),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        selectedLabUserId = value;
+                      });
+                    },
+                  ),
                 ],
               ),
 
@@ -132,9 +160,16 @@ class _DoctorImagesScreenState extends State<DoctorImagesScreen> {
                       return;
                     }
 
+                    if (selectedLabUserId == null) {
+                      messenger.showSnackBar(
+                        const SnackBar(content: Text("Please select a lab")),
+                      );
+                      return;
+                    }
+
                     await _apiClient.sendToLab(
                       imageId: imageId,
-                      labId: 5,
+                      labUserId: selectedLabUserId!,
                     );
 
                     messenger.showSnackBar(

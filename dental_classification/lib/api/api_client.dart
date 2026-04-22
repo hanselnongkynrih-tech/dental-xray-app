@@ -231,24 +231,32 @@ class ApiClient {
 
   Future<void> sendToLab({
     required int imageId,
-    required int labId,
+    required int labUserId,
   }) async {
     final headers = await _buildHeaders();
 
     final url = Uri.parse(
-      '${Constants.apiBaseUrl}/images/send-to-lab?image_id=$imageId&lab_id=$labId',
+      '${Constants.apiBaseUrl}/images/send-to-lab?image_id=$imageId&lab_user_id=$labUserId',
     );
 
-    final response = await http.post(
-      url,
-      headers: headers,
-    );
-
-    debugPrint("STATUS: ${response.statusCode}");
-    debugPrint("BODY: ${response.body}");
+    final response = await http.post(url, headers: headers);
 
     if (response.statusCode != 200) {
-      throw Exception("Failed: ${response.body}");
+      throw Exception('Failed to send to lab');
+    }
+  }
+
+  Future<List<dynamic>> getLabs() async {
+    final headers = await _buildHeaders();
+
+    final url = Uri.parse('${Constants.apiBaseUrl}/images/labs');
+
+    final response = await http.get(url, headers: headers);
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Failed to load labs');
     }
   }
 
