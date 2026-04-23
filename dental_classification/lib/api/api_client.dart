@@ -287,4 +287,20 @@ class ApiClient {
       throw Exception('Failed to load lab results');
     }
   }
+
+  Future<Map<String, dynamic>> getPatientDashboard() async {
+    final headers = await _buildHeaders(); // ✅ uses stored token
+
+    final response = await http.get(
+      Uri.parse("${Constants.apiBaseUrl}/patient/dashboard"),
+      headers: headers,
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception("Failed to load dashboard");
+    }
+  }
+
 }

@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
 from .database import engine, database, metadata
-from .api import auth, users, doctor_profile, patient_profile, lab_profile, results, images, lab_results, ml_predict
+from .api import auth, users, doctor_profile, patient_profile, lab_profile, results, images, lab_results, ml_predict, patient_dashboard
 
 metadata.create_all(bind=engine)
 
@@ -10,6 +10,7 @@ app = FastAPI()
 
 # routers
 app.include_router(auth.router)
+app.include_router(patient_dashboard.router)
 app.include_router(users.router)
 app.include_router(doctor_profile.router)
 app.include_router(patient_profile.router)

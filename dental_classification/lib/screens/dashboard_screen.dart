@@ -7,8 +7,8 @@ import 'doctor_patients_screen.dart';
 import 'doctor_images_screen.dart';
 
 // Patient screens
-import 'patient_upload_screen.dart';
-import 'patient_profile_screen.dart';
+import 'patient_dashboard_screen.dart';
+
 
 // Lab screens
 import 'lab_requests_screen.dart';
@@ -207,36 +207,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
       // ── PATIENT ─────────────────────────────────────────────────────────────
     } else if (role == 'patient') {
-      return [
-        _card(Icons.upload, "Upload X-ray", () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => const PatientUploadScreen(),
-            ),
-          );
-        }),
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+      Navigator.pushReplacement(
+        context,
+          MaterialPageRoute(
+            builder: (_) => const PatientDashboardScreen(),
+          ),
+        );
+      });
 
-        _card(Icons.history, "My Reports", () {
-          // TODO: wire up PatientReportsScreen when ready
-        }),
+  return [const SizedBox()]; // temporary empty
 
-        _card(Icons.image, "My Images", () {
-          // TODO: wire up PatientImagesScreen when ready
-        }),
 
-        _card(Icons.person, "Profile", () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => const PatientProfileScreen(),
-            ),
-          );
-        }),
-      ];
-
-      // ── LAB ─────────────────────────────────────────────────────────────────
-    } else if (role == 'lab') {
+  // ── LAB ─────────────────────────────────────────────────────────────────
+  }else if (role == 'lab') {
       return [
         _card(Icons.science, "Test Requests", () {
           Navigator.push(
