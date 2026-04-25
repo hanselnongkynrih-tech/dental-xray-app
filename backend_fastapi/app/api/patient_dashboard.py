@@ -51,7 +51,7 @@ async def get_patient_dashboard(user=Depends(get_current_user)):
 
     # ───────── RESPONSE ─────────
     return {
-        "name": name.capitalize() if name else "Patient",
+        "name": name.capitalize() if name else "Patient",   
         "images": images_count or 0,
         "reports": reports_count or 0,
         "appointments": appointments_count or 0,

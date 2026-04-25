@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import JWTError, jwt
 from datetime import datetime, timedelta
-from app.crud import authenticate_user, get_user_by_mobile
+from app.crud import authenticate_user, get_user_by_mobile, get_user_by_id
 from app.schemas import UserOut,OTPVerifyRequest
 from app.services.otp_service import send_otp, verify_otp
 
@@ -75,9 +75,9 @@ async def verify_otp_login(data: OTPVerifyRequest):
         )
 
     access_token = create_access_token(
-    data={
-            "sub": user.mobile_number,
-            "role": user.role   # 🔥 ADD THIS
+        data={
+            "sub": str(user.id),   # ✅ FIX
+            "role": user.role
         }
     )
 
@@ -99,18 +99,22 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> UserOut:
 
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        mobile_number: str = payload.get("sub")
-        role: str = payload.get("role") 
 
-        if mobile_number is None:
+        # ✅ CHANGE STARTS HERE
+        user_id: str = payload.get("sub")
+        role: str = payload.get("role")
+
+        if user_id is None:
             raise credentials_exception
 
-        user = await get_user_by_mobile(mobile_number)
+        # 🔥 IMPORTANT: fetch by ID now
+        user = await get_user_by_id(int(user_id))
 
         if user is None:
             raise credentials_exception
+        # ✅ CHANGE ENDS HERE
 
-        return UserOut.from_orm(user) 
+        return UserOut.from_orm(user)
 
     except JWTError:
         raise credentials_exception
@@ -154,8 +158,8 @@ async def firebase_login(data: FirebaseLoginRequest):
     # ✅ CREATE TOKEN
     access_token = create_access_token(
     data={
-        "sub": user.mobile_number,
-        "role": user.role   # 🔥 ADD THIS
+            "sub": str(user.id),
+            "role": user.role
         }
     )
 

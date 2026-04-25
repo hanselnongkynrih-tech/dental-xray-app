@@ -29,6 +29,10 @@ async def get_user_by_mobile(mobile_number: str):
     query = users.select().where(users.c.mobile_number == mobile_number)
     return await database.fetch_one(query)
 
+async def get_user_by_id(user_id: int):
+    query = users.select().where(users.c.id == user_id)
+    return await database.fetch_one(query)
+
 async def authenticate_user(mobile_number: str, password: str):
     user = await get_user_by_mobile(mobile_number)
     if user and verify_password(password, user.password_hash):

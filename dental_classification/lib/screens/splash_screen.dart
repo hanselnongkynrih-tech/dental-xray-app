@@ -1,6 +1,6 @@
-import 'dart:async';
+//import 'dart:async';
 import 'package:flutter/material.dart';
-import 'welcome_screen.dart';
+//import 'welcome_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -39,14 +39,14 @@ class _SplashScreenState extends State<SplashScreen>
     _controller.forward();
 
     // Navigate after 3 sec
-    Timer(const Duration(seconds: 3), () {
+    /*Timer(const Duration(seconds: 3), () {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const WelcomeScreen()),
       );
       // OR (better for your routing system):
       // Navigator.pushReplacementNamed(context, '/welcome');
-    });
+    });*/
   }
 
   @override

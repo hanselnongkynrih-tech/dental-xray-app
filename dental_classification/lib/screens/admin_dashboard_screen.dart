@@ -13,12 +13,9 @@ class AdminDashboardScreen extends StatefulWidget {
       _AdminDashboardScreenState();
 }
 
-class _AdminDashboardScreenState extends State<AdminDashboardScreen>
-    with SingleTickerProviderStateMixin {
+class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
   final AuthService _authService = AuthService();
-
-  late TabController _tabController;
 
   List<Map<String, dynamic>> users = [];
   List<Map<String, dynamic>> images = [];
@@ -26,11 +23,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
   bool isLoadingUsers = true;
   bool isLoadingImages = true;
 
+  String selectedPage = ""; // 🔥 NOTHING selected initially
+
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
-
     fetchUsers();
     fetchImages();
   }
@@ -120,122 +117,276 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
   }
 
   // =========================
-  // USER CARD
-  // =========================
-  Widget userCard(Map<String, dynamic> user) {
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
-      child: ListTile(
-        title: Text(user['full_name'] ?? ''),
-        subtitle: Text(
-          "${user['mobile_number']} • ${user['role']}",
-        ),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-
-            PopupMenuButton<String>(
-              icon: const Icon(Icons.edit),
-              onSelected: (value) => updateRole(user['id'], value),
-              itemBuilder: (context) => const [
-                PopupMenuItem(value: "patient", child: Text("Patient")),
-                PopupMenuItem(value: "doctor", child: Text("Doctor")),
-                PopupMenuItem(value: "lab", child: Text("Lab")),
-                PopupMenuItem(value: "admin", child: Text("Admin")),
-              ],
-            ),
-
-            IconButton(
-              icon: const Icon(Icons.delete, color: Colors.red),
-              onPressed: () => deleteUser(user['id']),
-            ),
-
-          ],
-        ),
-      ),
-    );
-  }
-
-  // =========================
-  // IMAGE CARD
-  // =========================
-  Widget imageCard(Map<String, dynamic> image) {
-
-    final imageUrl =
-        "${Constants.apiBaseUrl}/${image['image_path']}";
-
-    return Card(
-      margin: const EdgeInsets.all(10),
-      child: Column(
-        children: [
-
-          Expanded(
-            child: Image.network(
-              imageUrl,
-              width: double.infinity,
-              fit: BoxFit.cover,
-              errorBuilder: (_, _, _) =>
-              const Icon(Icons.broken_image),
-            ),
-          ),
-
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Text("User ID: ${image['user_id']}"),
-          ),
-
-          IconButton(
-            icon: const Icon(Icons.delete, color: Colors.red),
-            onPressed: () => deleteImage(image['id']),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // =========================
   // BUILD
   // =========================
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
 
+      // 🔷 DRAWER
+      drawer: _buildDrawer(context),
+
       appBar: AppBar(
-        title: const Text("Admin Panel"),
-        bottom: TabBar(
-          controller: _tabController,
-          tabs: const [
-            Tab(text: "Users"),
-            Tab(text: "Images"),
-          ],
+        title: const Text("Admin Dashboard"),
+        leading: Builder(
+          builder: (context) => IconButton(
+            icon: const Icon(Icons.menu),
+            onPressed: () => Scaffold.of(context).openDrawer(),
+          ),
         ),
       ),
 
-      body: TabBarView(
-        controller: _tabController,
+      body: Column(
         children: [
 
-          // USERS TAB
-          isLoadingUsers
-              ? const Center(child: CircularProgressIndicator())
-              : ListView(
-            children: users
-                .map((user) => userCard(user))
-                .toList(),
+          // 🔷 HEADER
+          Container(
+            margin: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFF2F6BFF), Color(0xFF4A8CFF)],
+              ),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: const Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text("Welcome Admin",
+                          style: TextStyle(color: Colors.white70)),
+                      SizedBox(height: 5),
+                      Text(
+                        "System Control Panel",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(Icons.admin_panel_settings,
+                    color: Colors.white, size: 50),
+              ],
+            ),
           ),
 
-          // IMAGES TAB
-          isLoadingImages
-              ? const Center(child: CircularProgressIndicator())
-              : GridView.count(
-            crossAxisCount: 2,
-            children: images
-                .map((image) => imageCard(image))
-                .toList(),
+          // 🔷 STATS
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              children: [
+                _StatCard("Users", users.length.toString(), Icons.people),
+                _StatCard("Images", images.length.toString(), Icons.image),
+              ],
+            ),
           ),
 
+          const SizedBox(height: 10),
+
+          // 🔷 CONTENT AREA
+          Expanded(
+            child: selectedPage == "users"
+                ? _buildUsers()
+                : selectedPage == "images"
+                ? _buildImages()
+                : const Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.dashboard,
+                      size: 60, color: Colors.grey),
+                  SizedBox(height: 10),
+                  Text(
+                    "Select Users or Images from menu",
+                    style: TextStyle(fontSize: 16),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ],
+      ),
+    );
+  }
+
+  // =========================
+  // DRAWER
+  // =========================
+  Widget _buildDrawer(BuildContext context) {
+    return Drawer(
+      child: ListView(
+        children: [
+
+          Container(
+            color: Colors.blue,
+            padding: const EdgeInsets.all(20),
+            child: const Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.admin_panel_settings,
+                    color: Colors.white, size: 40),
+                SizedBox(height: 10),
+                Text("Admin",
+                    style: TextStyle(color: Colors.white, fontSize: 18)),
+                Text("Dashboard",
+                    style: TextStyle(color: Colors.white70)),
+              ],
+            ),
+          ),
+
+          _drawerItem(Icons.people, "Users", () {
+            Navigator.pop(context);
+            setState(() => selectedPage = "users");
+          }),
+
+          _drawerItem(Icons.image, "Images", () {
+            Navigator.pop(context);
+            setState(() => selectedPage = "images");
+          }),
+
+          const Divider(),
+
+          // 🔥 SAFE LOGOUT
+          _drawerItem(Icons.logout, "Logout", () async {
+            Navigator.pop(context);
+
+            final navigator = Navigator.of(context);
+
+            await _authService.logout();
+
+            if (!mounted) return;
+
+            navigator.pushNamedAndRemoveUntil(
+                '/welcome', (route) => false);
+          }, color: Colors.red),
+        ],
+      ),
+    );
+  }
+
+  Widget _drawerItem(
+      IconData icon,
+      String title,
+      VoidCallback onTap, {
+        Color color = Colors.black,
+      }) {
+    return ListTile(
+      leading: Icon(icon, color: color),
+      title: Text(title, style: TextStyle(color: color)),
+      onTap: onTap,
+    );
+  }
+
+  // =========================
+  // USERS VIEW
+  // =========================
+  Widget _buildUsers() {
+    if (isLoadingUsers) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    return ListView(
+      children: users.map((user) {
+        return Card(
+          margin: const EdgeInsets.all(10),
+          child: ListTile(
+            title: Text(user['full_name']),
+            subtitle: Text("${user['mobile_number']} • ${user['role']}"),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+
+                PopupMenuButton<String>(
+                  icon: const Icon(Icons.edit),
+                  onSelected: (value) => updateRole(user['id'], value),
+                  itemBuilder: (context) => const [
+                    PopupMenuItem(value: "patient", child: Text("Patient")),
+                    PopupMenuItem(value: "doctor", child: Text("Doctor")),
+                    PopupMenuItem(value: "lab", child: Text("Lab")),
+                    PopupMenuItem(value: "admin", child: Text("Admin")),
+                  ],
+                ),
+
+                IconButton(
+                  icon: const Icon(Icons.delete, color: Colors.red),
+                  onPressed: () => deleteUser(user['id']),
+                ),
+              ],
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  // =========================
+  // IMAGES VIEW
+  // =========================
+  Widget _buildImages() {
+    if (isLoadingImages) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    return GridView.count(
+      crossAxisCount: 2,
+      children: images.map((img) {
+        return Card(
+          margin: const EdgeInsets.all(10),
+          child: Column(
+            children: [
+              Expanded(
+                child: Image.network(
+                  "${Constants.apiBaseUrl}/${img['image_path']}",
+                  fit: BoxFit.cover,
+                  width: double.infinity,
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.delete, color: Colors.red),
+                onPressed: () => deleteImage(img['id']),
+              ),
+            ],
+          ),
+        );
+      }).toList(),
+    );
+  }
+}
+
+// =========================
+// STAT CARD
+// =========================
+class _StatCard extends StatelessWidget {
+  final String title;
+  final String value;
+  final IconData icon;
+
+  const _StatCard(this.title, this.value, this.icon);
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Card(
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12)),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              Icon(icon, color: Colors.blue),
+              const SizedBox(height: 10),
+              Text(value,
+                  style: const TextStyle(
+                      fontSize: 18, fontWeight: FontWeight.bold)),
+              Text(title),
+            ],
+          ),
+        ),
       ),
     );
   }

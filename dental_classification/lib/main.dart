@@ -23,6 +23,11 @@ import 'screens/splash_screen.dart';
 
 import 'screens/dashboard_screen.dart';
 
+import 'package:shared_preferences/shared_preferences.dart';
+
+import 'services/auth_service.dart';
+
+
 
 
 Future<void> main() async {
@@ -86,11 +91,14 @@ class DentalClassificationApp extends StatelessWidget {
 
       themeMode: ThemeMode.system,
 
+      //home: const AppStartRouter(),
       initialRoute: '/',
 
       routes: {
 
-        '/': (context) => const SplashScreen(),
+        '/': (context) => AppStartRouter(),
+
+        //'/splash': (context) => const SplashScreen(),
         '/welcome': (context) => const WelcomeScreen(),
         '/login': (context) => const LoginScreen(),
 
@@ -136,5 +144,69 @@ class DentalClassificationApp extends StatelessWidget {
         },
       },
     );
+
+  }
+}
+
+class AppStartRouter extends StatefulWidget {
+  const AppStartRouter({super.key});
+
+  @override
+  State<AppStartRouter> createState() => _AppStartRouterState();
+}
+
+class _AppStartRouterState extends State<AppStartRouter> {
+
+  @override
+  void initState() {
+    super.initState();
+    _checkLogin();
+  }
+
+  Future<void> _checkLogin() async {
+    debugPrint("START CHECK LOGIN");
+
+    final authService = AuthService();
+
+    String? token;
+
+    try {
+      token = await authService
+          .getToken()
+          .timeout(const Duration(seconds: 2), onTimeout: () {
+        debugPrint("TOKEN TIMEOUT");
+        return null;
+      });
+    } catch (e) {
+      debugPrint("TOKEN ERROR: $e");
+      token = null;
+    }
+
+    final prefs = await SharedPreferences.getInstance();
+    final role = prefs.getString("role");
+
+    debugPrint("TOKEN: $token");
+    debugPrint("ROLE: $role");
+
+    await Future.delayed(const Duration(seconds: 2));
+
+    if (!mounted) return;
+
+    if (token != null && token.isNotEmpty && role != null) {
+      debugPrint("GO TO DASHBOARD");
+      Navigator.pushReplacementNamed(
+        context,
+        '/dashboard',
+        arguments: role,
+      );
+    } else {
+      debugPrint("GO TO WELCOME");
+      Navigator.pushReplacementNamed(context, '/welcome');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return const SplashScreen();
   }
 }

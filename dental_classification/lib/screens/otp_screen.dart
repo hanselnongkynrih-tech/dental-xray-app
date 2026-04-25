@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../services/auth_service.dart';
 import '../services/firebase_auth_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class OtpScreen extends StatefulWidget {
   final String mobileNumber;
@@ -61,9 +62,13 @@ class _OtpScreenState extends State<OtpScreen> {
 
       // 🔥 THIS IS THE KEY PART TO ADD/UPDATE:
       // If backend verification is successful, use the role passed from Login
-      if (mounted) {
-        _navigateToDashboard(widget.role);
-      }
+      // 🔥 SAVE ROLE + NAVIGATE
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString("role", widget.role);
+
+      if (!mounted) return;
+
+      _navigateToDashboard(widget.role);
 
     } catch (e) {
       setState(() {

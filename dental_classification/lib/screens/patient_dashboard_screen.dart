@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../services/auth_service.dart';
 import 'patient_upload_screen.dart';
 import '../api/api_client.dart';
-import 'login_screen.dart';
+//import 'login_screen.dart';
 
 class PatientDashboardScreen extends StatefulWidget {
   const PatientDashboardScreen({super.key});
@@ -36,14 +37,20 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
 
   // ✅ CLEAN LOGOUT (NO CONTEXT PARAM)
   Future<void> _logout() async {
+    final authService = AuthService();
+
+    // 🔥 remove JWT token (REAL FIX)
+    await authService.logout();
+
+    // 🔥 remove role (IMPORTANT)
     final prefs = await SharedPreferences.getInstance();
-    await prefs.remove("token");
+    await prefs.remove("role");
 
     if (!mounted) return;
 
-    Navigator.pushAndRemoveUntil(
+    Navigator.pushNamedAndRemoveUntil(
       context,
-      MaterialPageRoute(builder: (_) => const LoginScreen()),
+      '/welcome',
           (route) => false,
     );
   }
@@ -76,10 +83,6 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
           ),
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.logout, color: Colors.red),
-            onPressed: _logout, // ✅ FIXED
-          ),
           const SizedBox(width: 10),
         ],
       ),
