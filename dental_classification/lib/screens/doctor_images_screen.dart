@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../api/api_client.dart';
 import '../services/auth_service.dart';
+import 'report_screen.dart';
 
 class DoctorImagesScreen extends StatefulWidget {
   final int? patientId;
@@ -114,7 +115,7 @@ class _DoctorImagesScreenState extends State<DoctorImagesScreen> {
 
                   DropdownButtonFormField<int>(
                     hint: const Text("Select Lab"),
-                    value: selectedLabUserId,
+                    initialValue: selectedLabUserId,
                     items: labs.map<DropdownMenuItem<int>>((lab) {
                       return DropdownMenuItem(
                         value: lab["user_id"], // ✅ IMPORTANT
@@ -134,13 +135,13 @@ class _DoctorImagesScreenState extends State<DoctorImagesScreen> {
                   ? ElevatedButton(
                 child: const Text("View"),
                 onPressed: () {
-                  showDialog(
-                    context: context,
-                    builder: (_) => Dialog(
-                      child: Image.network(
-                        getImageUrl(img['file_path'] ?? ''),
-                        fit: BoxFit.cover,
-                      ),
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) =>
+                          ReportScreen(
+                            imageId: img['image_id'] ?? img['id'],
+                          )
                     ),
                   );
                 },

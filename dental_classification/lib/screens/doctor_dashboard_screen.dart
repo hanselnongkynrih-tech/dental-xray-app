@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 
+import '../utils/constants.dart';
+
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+
 class DoctorDashboardScreen extends StatefulWidget {
   const DoctorDashboardScreen({super.key});
 
@@ -10,6 +15,58 @@ class DoctorDashboardScreen extends StatefulWidget {
 }
 
 class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
+
+  String doctorName = "";
+  bool isLoading = true;
+
+  int patients = 0;
+  int cases = 0;
+  int reports = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    loadDoctor();
+    loadDashboard();   // 🔥 ADD THIS
+  }
+
+  Future<void> loadDoctor() async {
+    final user = await AuthService().getCurrentUser();
+
+    if (user != null) {
+      setState(() {
+        doctorName = user['full_name'] ?? "";
+        isLoading = false;
+      });
+    }
+  }
+
+  Future<void> loadDashboard() async {
+    try {
+      final token = await AuthService().getToken();
+
+      final response = await http.get(
+        Uri.parse("${Constants.apiBaseUrl}/doctor/dashboard"),
+        headers: {
+          "Authorization": "Bearer $token",
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+
+        setState(() {
+          patients = data['patients'] ?? 0;
+          cases = data['cases'] ?? 0;
+          reports = data['reports'] ?? 0;
+        });
+      } else {
+        debugPrint("Dashboard failed: ${response.statusCode}");
+      }
+    } catch (e) {
+      debugPrint("Dashboard error: $e");
+    }
+  }
 
   // 🔥 LOGOUT
   Future<void> _logout() async {
@@ -57,16 +114,18 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
               ),
               borderRadius: BorderRadius.circular(16),
             ),
-            child: const Row(
+            child: Row(
               children: [
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text("Welcome Doctor",
-                          style: TextStyle(color: Colors.white70)),
-                      SizedBox(height: 5),
                       Text(
+                        isLoading ? "Loading..." : "Welcome Dr. $doctorName",
+                        style: const TextStyle(color: Colors.white70),
+                      ),
+                      const SizedBox(height: 5),
+                      const  Text(
                         "Manage Patients & Diagnoses",
                         style: TextStyle(
                           color: Colors.white,
@@ -77,7 +136,7 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                     ],
                   ),
                 ),
-                Icon(Icons.medical_services,
+                const Icon(Icons.medical_services,
                     color: Colors.white, size: 50),
               ],
             ),
@@ -87,10 +146,10 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
 
           // 🔷 STATS
           Row(
-            children: const [
-              _StatCard("Patients", "0", Icons.people),
-              _StatCard("Cases", "0", Icons.medical_services),
-              _StatCard("Reports", "0", Icons.description),
+            children: [
+              _StatCard("Patients", "$patients", Icons.people),
+              _StatCard("Cases", "$cases", Icons.medical_services),
+              _StatCard("Reports", "$reports", Icons.description),
             ],
           ),
         ],

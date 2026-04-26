@@ -27,7 +27,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'services/auth_service.dart';
 
-
+import 'screens/doctor_images_screen.dart';
+import 'screens/doctor_patients_screen.dart';
 
 
 Future<void> main() async {
@@ -117,6 +118,10 @@ class DentalClassificationApp extends StatelessWidget {
 
         '/doctor_profile': (context) =>
         const DoctorProfileScreen(),
+
+        '/doctor_images': (context) => const DoctorImagesScreen(),
+
+        '/doctor_patients': (context) => const DoctorPatientsScreen(),
 
         '/patient_profile': (context) =>
         const PatientProfileScreen(),
