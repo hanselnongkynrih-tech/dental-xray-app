@@ -37,15 +37,17 @@ async def get_patient_dashboard(user=Depends(get_current_user)):
     # ───────── RECENT ACTIVITY ─────────
     try:
         recent = await database.fetch_all(
-            """
-            SELECT 'X-ray Uploaded' AS title, created_at
+        """
+            SELECT 
+            id AS image_id,
+            status,
+            NOW() AS created_at,
+            'Report update' AS title
             FROM images
-            WHERE user_id = :id
-            ORDER BY created_at DESC
+            ORDER BY id DESC
             LIMIT 5
-            """,
-            {"id": user_id}
-        )
+        """
+    )
     except:
         recent = []
 
@@ -56,9 +58,11 @@ async def get_patient_dashboard(user=Depends(get_current_user)):
         "reports": reports_count or 0,
         "appointments": appointments_count or 0,
         "recent_activity": [
-            {
+        {
                 "title": r["title"],
-                "time": str(r["created_at"])
+                "time": str(r["created_at"]),
+                "image_id": r["image_id"],
+                "status": r["status"]
             } for r in recent
         ]
     }

@@ -1,6 +1,9 @@
 from fastapi import APIRouter, UploadFile, File, Depends, HTTPException
 from pathlib import Path
 from uuid import uuid4
+from fastapi.responses import FileResponse
+from reportlab.pdfgen import canvas
+import os
 
 from app.database import database
 from app.models import images
@@ -70,7 +73,7 @@ async def upload_image(
                 "lab_id": lab_id,
                 "image_path": image_path,
                 "status": "uploaded",
-                "assigned_to": "lab"
+                "assigned_to": "doctor"
             }
         )
 
@@ -268,3 +271,84 @@ async def get_labs():
 
     rows = await database.fetch_all(query)
     return [dict(row) for row in rows]
+
+    # ===============================
+# ✅ LAB: SUBMIT REPORT
+# ===============================
+@router.post("/lab-submit-report")
+async def lab_submit_report(
+    image_id: int,
+    result: str,
+    confidence: float,
+    current_user: UserOut = Depends(get_current_user)
+):
+    if current_user.role != "lab":
+        raise HTTPException(status_code=403)
+
+    # update diagnosis report
+    await database.execute("""
+        UPDATE diagnosis_reports
+        SET result = :result,
+            confidence = :confidence,
+            status = 'lab_completed'
+        WHERE image_id = :image_id
+    """, {
+        "image_id": image_id,
+        "result": result,
+        "confidence": confidence
+    })
+
+    # update image status
+    await database.execute("""
+        UPDATE images
+        SET status = 'lab_completed'
+        WHERE id = :image_id
+    """, {"image_id": image_id})
+
+    return {"message": "Lab report submitted"}
+
+# ===============================
+# ✅ DOCTOR: SEND REPORT TO PATIENT
+# ===============================
+@router.put("/send-to-patient/{image_id}")
+async def send_to_patient(
+    image_id: int,
+    current_user: UserOut = Depends(get_current_user)
+):
+    if current_user.role != "doctor":
+        raise HTTPException(status_code=403)
+
+    # update diagnosis report
+    await database.execute("""
+        UPDATE diagnosis_reports
+        SET status = 'final'
+        WHERE image_id = :image_id
+    """, {"image_id": image_id})
+
+    # update image status
+    await database.execute("""
+        UPDATE images
+        SET status = 'sent_to_patient'
+        WHERE id = :image_id
+    """, {"image_id": image_id})
+
+    return {"message": "Report sent to patient"}
+
+# ===============================
+# ✅ DOWNLOAD REPORT (PDF)
+# ===============================
+@router.get("/download-report/{image_id}")
+async def download_report(image_id: int):
+
+    os.makedirs("reports", exist_ok=True)
+
+    file_path = f"reports/report_{image_id}.pdf"
+
+    c = canvas.Canvas(file_path)
+    c.drawString(100, 750, f"Dental Report")
+    c.drawString(100, 720, f"Image ID: {image_id}")
+    c.drawString(100, 700, "Result: Cavity detected")
+    c.drawString(100, 680, "Confidence: 0.91")
+    c.save()
+
+    return FileResponse(file_path, media_type="application/pdf", filename=f"report_{image_id}.pdf")

@@ -5,6 +5,7 @@ import '../services/auth_service.dart';
 import 'patient_upload_screen.dart';
 import '../api/api_client.dart';
 //import 'login_screen.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class PatientDashboardScreen extends StatefulWidget {
   const PatientDashboardScreen({super.key});
@@ -53,6 +54,19 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
       '/welcome',
           (route) => false,
     );
+  }
+
+  void openReport(int imageId) async {
+    final url = Uri.parse(
+        "http://10.0.2.2:8000/images/download-report/$imageId",
+    );
+
+    if (!await launchUrl(
+      url,
+      mode: LaunchMode.externalApplication, // 🔥 IMPORTANT
+    )) {
+      debugPrint("Could not open report");
+    }
   }
 
   @override
@@ -325,10 +339,25 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
                 : activities.map<Widget>((item) {
               return Column(
                 children: [
-                  _ActivityTile(
-                    item['title'],
-                    "",
-                    item['time'],
+                  Column(
+                    children: [
+                      _ActivityTile(
+                        item['title'],
+                        "",
+                        item['time'],
+                      ),
+
+                      if (item['image_id'] != null)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 10),
+                          child: ElevatedButton(
+                            onPressed: () {
+                              openReport(item['image_id']);
+                            },
+                            child: const Text("View Report"),
+                          ),
+                        ),
+                    ],
                   ),
                   const Divider(),
                 ],
@@ -389,9 +418,21 @@ class _ActivityTile extends StatelessWidget {
         backgroundColor: Color(0xFFE3F2FD),
         child: Icon(Icons.arrow_upward, color: Colors.blue),
       ),
-      title: Text(title),
+      title: Text(
+        title,
+        style: const TextStyle(fontWeight: FontWeight.w500),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      ),
       subtitle: Text(subtitle),
-      trailing: Text(time, style: const TextStyle(fontSize: 12)),
+      trailing: SizedBox(
+        width: 120,
+        child: Text(
+          time,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(fontSize: 12),
+        ),
+      ),
     );
   }
 }
