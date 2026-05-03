@@ -159,3 +159,14 @@ diagnosis_reports = Table(
 
     Column("created_at", DateTime, default=datetime.utcnow)
 )
+
+appointments = Table(
+    "appointments",
+    metadata,
+    Column("id", Integer, primary_key=True),
+    Column("patient_id", Integer, ForeignKey("users.id")),
+    Column("doctor_id", Integer, ForeignKey("users.id"), nullable=True),
+    Column("date", String),
+    Column("time", String),
+    Column("status", String, default="pending"),
+)

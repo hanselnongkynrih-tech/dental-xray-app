@@ -6,6 +6,8 @@ import 'patient_upload_screen.dart';
 import '../api/api_client.dart';
 //import 'login_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'book_appointment_screen.dart';
+import 'patient_appointments_screen.dart';
 
 class PatientDashboardScreen extends StatefulWidget {
   const PatientDashboardScreen({super.key});
@@ -16,6 +18,9 @@ class PatientDashboardScreen extends StatefulWidget {
 }
 
 class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
+
+  final ApiClient apiClient = ApiClient();
+
   Map<String, dynamic>? dashboardData;
 
   @override
@@ -26,13 +31,18 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
 
   Future<void> fetchDashboard() async {
     try {
-      final data = await ApiClient().getPatientDashboard();
-      if (!mounted) return;
+      final data = await apiClient.getPatientDashboard();
       setState(() {
         dashboardData = data;
       });
     } catch (e) {
-      debugPrint("Error: $e");
+      if (!mounted) return; // ✅ ADD THIS
+
+      if (e.toString().contains("Session expired")) {
+        Navigator.pushReplacementNamed(context, "/login");
+      } else {
+        debugPrint(e.toString());
+      }
     }
   }
 
@@ -294,20 +304,79 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
               Icons.image,
               Colors.blue,
             ),
+
             _StatCard(
               "Reports",
               "${dashboardData?['reports'] ?? 0}",
               Icons.description,
               Colors.green,
             ),
-            _StatCard(
-              "Appointments",
-              "${dashboardData?['appointments'] ?? 0}",
-              Icons.calendar_today,
-              Colors.orange,
+
+            GestureDetector(
+              onTap: () async {
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const PatientAppointmentsScreen(),
+                  ),
+                );
+
+                fetchDashboard();
+              },
+              child: _StatCard(
+                "Appointments",
+                "${dashboardData?['appointments'] ?? 0}",
+                Icons.calendar_today,
+                Colors.orange,
+              ),
             ),
           ],
         ),
+
+        const SizedBox(height: 15),
+
+        GestureDetector(
+          onTap: () async {
+            await Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const BookAppointmentScreen(),
+              ),
+            );
+            fetchDashboard();
+          },
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFF4FACFE), Color(0xFF00F2FE)],
+              ),
+              borderRadius: BorderRadius.circular(30),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.blue.withValues(alpha: 0.3),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: const [
+                Icon(Icons.add, color: Colors.white),
+                SizedBox(width: 8),
+                Text(
+                  "Book Appointment",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+
       ],
     );
   }

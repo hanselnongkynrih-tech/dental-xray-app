@@ -6,6 +6,8 @@ import '../utils/constants.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
+import '../api/api_client.dart';
+
 class DoctorDashboardScreen extends StatefulWidget {
   const DoctorDashboardScreen({super.key});
 
@@ -22,12 +24,14 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
   int patients = 0;
   int cases = 0;
   int reports = 0;
+  int appointments = 0;
 
   @override
   void initState() {
     super.initState();
     loadDoctor();
-    loadDashboard();   // 🔥 ADD THIS
+    loadDashboard();
+    loadAppointments(); // 🔥 ADD THIS
   }
 
   Future<void> loadDoctor() async {
@@ -38,6 +42,17 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
         doctorName = user['full_name'] ?? "";
         isLoading = false;
       });
+    }
+  }
+
+  Future<void> loadAppointments() async {
+    try {
+      final data = await ApiClient().getDoctorAppointments();
+      setState(() {
+        appointments = data.length;
+      });
+    } catch (e) {
+      debugPrint(e.toString());
     }
   }
 
@@ -150,6 +165,7 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
               _StatCard("Patients", "$patients", Icons.people),
               _StatCard("Cases", "$cases", Icons.medical_services),
               _StatCard("Reports", "$reports", Icons.description),
+              _StatCard("Appointments", "$appointments", Icons.calendar_today),
             ],
           ),
         ],

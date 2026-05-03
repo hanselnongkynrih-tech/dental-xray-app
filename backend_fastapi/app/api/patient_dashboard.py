@@ -28,9 +28,9 @@ async def get_patient_dashboard(user=Depends(get_current_user)):
 
     try:
         appointments_count = await database.fetch_val(
-            "SELECT COUNT(*) FROM appointments WHERE user_id = :id",
+            "SELECT COUNT(*) FROM appointments WHERE patient_id = :id",
             {"id": user_id}
-        )
+    )
     except:
         appointments_count = 0
 

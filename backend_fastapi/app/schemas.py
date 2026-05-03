@@ -109,3 +109,18 @@ class OTPVerifyRequest(BaseModel):
 class FirebaseLoginRequest(BaseModel):
     mobile_number: str
     role: str   # 🔥 REQUIRED
+
+class AppointmentCreate(BaseModel):
+    date: str
+    time: str
+    doctor_id: int 
+
+
+class AppointmentOut(BaseModel):
+    id: int
+    date: str
+    time: str
+    status: str
+
+    class Config:
+        from_attributes = True

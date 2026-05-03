@@ -13,6 +13,8 @@ class ApiClient {
   Future<Map<String, String>> _buildHeaders() async {
     final token = await _authService.getToken();
 
+    //print("TOKEN FROM STORAGE: $token"); // 🔥 ADD THIS
+
     final headers = {
       'Content-Type': 'application/json',
     };
@@ -298,9 +300,85 @@ class ApiClient {
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
+    }  else if (response.statusCode == 401) {
+          throw Exception("Session expired");
     } else {
       throw Exception("Failed to load dashboard");
     }
   }
+
+  // ===========================
+  // 🔹 APPOINTMENTS
+  // ===========================
+
+  // ➕ Create appointment
+  Future<void> createAppointment({
+    required String date,
+    required String time,
+    required int doctorId,
+  }) async {
+    final headers = await _buildHeaders();
+
+    final response = await http.post(
+      Uri.parse("${Constants.apiBaseUrl}/appointments/create"),
+      headers: headers,
+      body: jsonEncode({
+        "date": date,
+        "time": time,
+        "doctor_id": doctorId,
+      }),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception("Failed to create appointment");
+    }
+  }
+
+  // 📥 Get my appointments
+  Future<List<dynamic>> getMyAppointments() async {
+    final headers = await _buildHeaders();
+
+    final response = await http.get(
+      Uri.parse("${Constants.apiBaseUrl}/appointments/my"),
+      headers: headers,
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception("Failed to load appointments");
+    }
+  }
+
+  Future<List<dynamic>> getDoctors() async {
+    final headers = await _buildHeaders();
+
+    final response = await http.get(
+      Uri.parse("${Constants.apiBaseUrl}/users/doctors"), // ✅ CORRECT
+      headers: headers,
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception("Failed to load doctors");
+    }
+  }
+
+  Future<List<dynamic>> getDoctorAppointments() async {
+    final headers = await _buildHeaders();
+
+    final response = await http.get(
+      Uri.parse("${Constants.apiBaseUrl}/appointments/doctor"),
+      headers: headers,
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception("Failed to load doctor appointments");
+    }
+  }
+
 
 }
