@@ -185,9 +185,9 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                     children: [
                       Expanded(
                         child: _QuickActionCard(
-                          icon: Icons.videocam_rounded,
-                          label: "Instant Video\nConsultation",
-                          sub: "Connect within 60 secs",
+                          icon: Icons.calendar_today,
+                          label: "Book\nAppointment",
+                          sub: "Schedule with dentist",
                           color: const Color(0xFFDCEEFF),
                           iconColor: const Color(0xFF1E6FC4),
                           isDark: isDark,
@@ -196,9 +196,9 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                       const SizedBox(width: 12),
                       Expanded(
                         child: _QuickActionCard(
-                          icon: Icons.person_search_rounded,
-                          label: "Find Dentists\nNear You",
-                          sub: "Confirmed appointments",
+                          icon: Icons.list_alt,
+                          label: "My\nAppointments",
+                          sub: "View your bookings",
                           color: const Color(0xFFD7F5EC),
                           iconColor: const Color(0xFF0E9E6A),
                           isDark: isDark,

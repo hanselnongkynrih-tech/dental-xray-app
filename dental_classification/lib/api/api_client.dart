@@ -316,6 +316,7 @@ class ApiClient {
     required String date,
     required String time,
     required int doctorId,
+    required String specialization,
   }) async {
     final headers = await _buildHeaders();
 
@@ -326,6 +327,7 @@ class ApiClient {
         "date": date,
         "time": time,
         "doctor_id": doctorId,
+        "specialization": specialization,
       }),
     );
 

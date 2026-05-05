@@ -114,6 +114,7 @@ class AppointmentCreate(BaseModel):
     date: str
     time: str
     doctor_id: int 
+    specialization: str
 
 
 class AppointmentOut(BaseModel):

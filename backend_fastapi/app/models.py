@@ -169,4 +169,5 @@ appointments = Table(
     Column("date", String),
     Column("time", String),
     Column("status", String, default="pending"),
+    Column("specialization", String, nullable=True),
 )

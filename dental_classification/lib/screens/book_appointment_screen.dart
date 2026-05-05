@@ -14,6 +14,16 @@ class _BookAppointmentScreenState extends State<BookAppointmentScreen> {
 
   DateTime? selectedDate;
   TimeOfDay? selectedTime;
+  String? selectedSpecialization;
+  final List<String> specializations = [
+    "Straightening Teeth (Braces)",
+    "Pediatric Dentistry",
+    "Gum Specialist (Periodontist)",
+    "Root Canal Specialist",
+    "Restoration (Dentist)",
+    "Oral & Maxillofacial Pathology",
+    "Oral & Maxillofacial Radiology",
+  ];
 
   List<dynamic> doctors = [];
   int? selectedDoctorId;
@@ -60,7 +70,13 @@ class _BookAppointmentScreenState extends State<BookAppointmentScreen> {
   Future<void> submit() async {
     if (selectedDate == null ||
         selectedTime == null ||
-        selectedDoctorId == null) {
+        selectedDoctorId == null ||
+        selectedSpecialization == null) {
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please fill all fields")),
+      );
+
       return;
     }
 
@@ -73,6 +89,7 @@ class _BookAppointmentScreenState extends State<BookAppointmentScreen> {
         date: date,
         time: time,
         doctorId: selectedDoctorId!,
+        specialization: selectedSpecialization!,
       );
 
       if (!mounted) return;
@@ -181,6 +198,29 @@ class _BookAppointmentScreenState extends State<BookAppointmentScreen> {
                 ),
                 child: Column(
                   children: [
+
+                    /// 🦷 SPECIALIZATION SELECT
+                    DropdownButtonFormField<String>(
+                      initialValue: selectedSpecialization,
+                      decoration: InputDecoration(
+                        labelText: "Select Treatment",
+                        prefixIcon: const Icon(Icons.medical_services),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      items: specializations.map((spec) {
+                        return DropdownMenuItem(
+                          value: spec,
+                          child: Text(spec),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        setState(() => selectedSpecialization = value);
+                      },
+                    ),
+
+                    const SizedBox(height: 16),
 
                     /// 👨‍⚕️ DOCTOR DROPDOWN
                     DropdownButtonFormField<int>(

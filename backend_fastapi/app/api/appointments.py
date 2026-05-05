@@ -3,6 +3,8 @@ from app.database import database
 from app.models import appointments
 from app.api.auth import get_current_user
 from app.schemas import AppointmentCreate
+from fastapi import HTTPException
+from app.models import users
 
 router = APIRouter()
 
@@ -11,13 +13,28 @@ router = APIRouter()
 async def create_appointment(
     data: AppointmentCreate,
     current_user=Depends(get_current_user)
+
 ):
+    
+     # ❌ Check doctor selected
+    if not data.doctor_id:
+        raise HTTPException(status_code=400, detail="Doctor is required")
+
+    # ❌ Check doctor exists
+    doctor = await database.fetch_one(
+        users.select().where(users.c.id == data.doctor_id)
+    )
+
+    if not doctor:
+        raise HTTPException(status_code=404, detail="Doctor not found")
+
     query = appointments.insert().values(
         patient_id=current_user.id,
         doctor_id=data.doctor_id,   # ✅ ADD THIS
         date=data.date,
         time=data.time,
-        status="pending"
+        status="pending",
+        specialization=data.specialization
     )
 
     await database.execute(query)
