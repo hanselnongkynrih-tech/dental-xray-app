@@ -7,6 +7,8 @@
 
 import 'package:flutter/material.dart';
 
+//import 'dart:io';
+
 class AppColors {
 
   static const primary = Color(0xFF2563EB);
@@ -29,7 +31,29 @@ class AppSpacing {
 
 }
 
-class Constants {
+/*class Constants {
   // for Android emulator
   static const apiBaseUrl = 'http://10.0.2.2:8000';
+}*/
+
+/*class Constants {
+
+  static String get apiBaseUrl {
+
+    // Android Emulator
+    if (Platform.isAndroid) {
+
+      // Detect emulator
+      if (!Platform.environment.containsKey('FLUTTER_TEST')) {
+        return 'http://10.0.2.2:8000';
+      }
+    }
+
+    // Physical device using adb reverse
+    return 'http://127.0.0.1:8000';
+  }
+}*/
+
+class Constants {
+  static const String apiBaseUrl = 'http://127.0.0.1:8000';
 }

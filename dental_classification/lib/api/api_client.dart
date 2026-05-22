@@ -203,16 +203,16 @@ class ApiClient {
 
   // 🧑‍⚕️ Get patients assigned to doctor
   Future<List<dynamic>> getDoctorPatients(int doctorId) async {
-    final headers = await _buildHeaders();
 
-    final url = Uri.parse('${Constants.apiBaseUrl}/lab-results/doctor/$doctorId');
-
-    final response = await http.get(url, headers: headers);
+    final response = await http.get(
+      Uri.parse("${Constants.apiBaseUrl}/doctor/patients"),
+      headers: await _buildHeaders(),
+    );
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
     } else {
-      throw Exception('Failed to load patients');
+      throw Exception("Failed to load patients");
     }
   }
 
@@ -353,11 +353,10 @@ class ApiClient {
   }
 
   Future<List<dynamic>> getDoctors() async {
-    final headers = await _buildHeaders();
 
     final response = await http.get(
-      Uri.parse("${Constants.apiBaseUrl}/users/doctors"), // ✅ CORRECT
-      headers: headers,
+      Uri.parse("${Constants.apiBaseUrl}/users/doctors"),
+      headers: await _buildHeaders(),
     );
 
     if (response.statusCode == 200) {
@@ -381,6 +380,19 @@ class ApiClient {
       throw Exception("Failed to load doctor appointments");
     }
   }
+  // ✏️ Update appointment status
 
+  Future<void> updateAppointmentStatus({
+    required int appointmentId,
+    required String status,
+  }) async {
+    await http.put(
+      Uri.parse(
+        "${Constants.apiBaseUrl}/appointments/update-status"
+            "?appointment_id=$appointmentId&status=$status",
+      ),
+      headers: await _buildHeaders(),
+    );
+  }
 
 }

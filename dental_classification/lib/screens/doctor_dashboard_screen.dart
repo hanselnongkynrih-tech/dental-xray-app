@@ -25,6 +25,7 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
   int cases = 0;
   int reports = 0;
   int appointments = 0;
+  List<dynamic> appointmentList = [];
 
   @override
   void initState() {
@@ -48,9 +49,12 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
   Future<void> loadAppointments() async {
     try {
       final data = await ApiClient().getDoctorAppointments();
+
       setState(() {
+        appointmentList = data;
         appointments = data.length;
       });
+
     } catch (e) {
       debugPrint(e.toString());
     }
@@ -118,7 +122,7 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
       // ✅ CLEAN BODY (NO ACTION BUTTONS)
       body: ListView(
         padding: const EdgeInsets.all(16),
-        children: [
+        children: <Widget>[
 
           // 🔷 WELCOME CARD
           Container(
@@ -165,9 +169,130 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
               _StatCard("Patients", "$patients", Icons.people),
               _StatCard("Cases", "$cases", Icons.medical_services),
               _StatCard("Reports", "$reports", Icons.description),
-              _StatCard("Appointments", "$appointments", Icons.calendar_today),
+              GestureDetector(
+                onTap: () {
+                  Navigator.pushNamed(
+                    context,
+                    '/doctor_appointments',
+                  );
+                },
+                child: _StatCard(
+                  "Appointments",
+                  "$appointments",
+                  Icons.calendar_today,
+                ),
+              ),
             ],
           ),
+          const SizedBox(height: 25),
+
+          const Text(
+            "Appointments",
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 10),
+
+          ...appointmentList.map((appointment) {
+            return Card(
+              margin: const EdgeInsets.only(bottom: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+
+                    Text(
+                      "Patient ID: ${appointment['patient_id']}",
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+
+                    const SizedBox(height: 8),
+
+                    Text("Treatment: ${appointment['specialization'] ?? 'N/A'}"),
+                    Text("Date: ${appointment['date']}"),
+                    Text("Time: ${appointment['time']}"),
+
+                    const SizedBox(height: 10),
+
+                    if (appointment['status'] == "pending")
+                      Row(
+                        children: [
+
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: () async {
+
+                                await ApiClient().updateAppointmentStatus(
+                                  appointmentId: appointment['id'],
+                                  status: "accepted",
+                                );
+
+                                loadAppointments();
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.green,
+                              ),
+                              child: const Text("Accept"),
+                            ),
+                          ),
+
+                          const SizedBox(width: 10),
+
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: () async {
+
+                                await ApiClient().updateAppointmentStatus(
+                                  appointmentId: appointment['id'],
+                                  status: "rejected",
+                                );
+
+                                loadAppointments();
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.red,
+                              ),
+                              child: const Text("Reject"),
+                            ),
+                          ),
+                        ],
+                      )
+                    else
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: appointment['status'] == "accepted"
+                              ? Colors.green.shade100
+                              : Colors.red.shade100,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          appointment['status'].toUpperCase(),
+                          style: TextStyle(
+                            color: appointment['status'] == "accepted"
+                                ? Colors.green
+                                : Colors.red,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            );
+          }),
         ],
       ),
     );

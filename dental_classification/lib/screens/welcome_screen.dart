@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import '../utils/constants.dart';
+import 'contact_us_screen.dart';
+import 'about_screen.dart';
+import '../api/api_client.dart';
+import 'package:screenshot/screenshot.dart';
 
 class WelcomeScreen extends StatefulWidget {
   const WelcomeScreen({super.key});
@@ -14,6 +18,15 @@ class _WelcomeScreenState extends State<WelcomeScreen>
   late Animation<double> _fade;
   late Animation<Offset> _slide;
 
+  final ScreenshotController screenshotController =
+  ScreenshotController();
+
+  final ApiClient apiClient = ApiClient();
+
+  List<dynamic> doctors = [];
+
+  bool isDoctorsLoading = true;
+
   @override
   void initState() {
     super.initState();
@@ -27,6 +40,8 @@ class _WelcomeScreenState extends State<WelcomeScreen>
       end: Offset.zero,
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
     _controller.forward();
+
+    loadDoctors();
   }
 
   @override
@@ -38,11 +53,34 @@ class _WelcomeScreenState extends State<WelcomeScreen>
   void _goToLogin() => Navigator.pushReplacementNamed(context, '/login');
   void _goToRegister() => Navigator.pushNamed(context, '/register');
 
+  Future<void> loadDoctors() async {
+
+    try {
+
+      final data = await apiClient.getDoctors();
+
+      setState(() {
+        doctors = data;
+        isDoctorsLoading = false;
+      });
+
+    } catch (e) {
+
+      debugPrint(e.toString());
+
+      setState(() {
+        isDoctorsLoading = false;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Scaffold(
+    return Screenshot(
+        controller: screenshotController,
+        child: Scaffold(
       backgroundColor: isDark ? const Color(0xFF0D0D0D) : const Color(0xFFF7F9FC),
       body: SafeArea(
         child: FadeTransition(
@@ -184,24 +222,48 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                   Row(
                     children: [
                       Expanded(
-                        child: _QuickActionCard(
-                          icon: Icons.calendar_today,
-                          label: "Book\nAppointment",
-                          sub: "Schedule with dentist",
-                          color: const Color(0xFFDCEEFF),
-                          iconColor: const Color(0xFF1E6FC4),
-                          isDark: isDark,
+                        child:
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const ContactUsScreen(),
+                              ),
+                            );
+                          },
+
+                          child: _QuickActionCard(
+                            icon: Icons.contact_phone_rounded,
+                            label: "Contact\nUs",
+                            sub: "Reach out to our team",
+                            color: const Color(0xFFDCEEFF),
+                            iconColor: const Color(0xFF1E6FC4),
+                            isDark: isDark,
+                          ),
                         ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
-                        child: _QuickActionCard(
-                          icon: Icons.list_alt,
-                          label: "My\nAppointments",
-                          sub: "View your bookings",
-                          color: const Color(0xFFD7F5EC),
-                          iconColor: const Color(0xFF0E9E6A),
-                          isDark: isDark,
+                        child:
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const AboutScreen(),
+                              ),
+                            );
+                          },
+
+                          child: _QuickActionCard(
+                            icon: Icons.info_outline_rounded,
+                            label: "About\nScanMyTooth",
+                            sub: "Learn more about us",
+                            color: const Color(0xFFD7F5EC),
+                            iconColor: const Color(0xFF0E9E6A),
+                            isDark: isDark,
+                          ),
                         ),
                       ),
                     ],
@@ -320,28 +382,25 @@ class _WelcomeScreenState extends State<WelcomeScreen>
 
                   SizedBox(
                     height: 190,
-                    child: ListView(
+                    child: isDoctorsLoading
+                        ? const Center(
+                      child: CircularProgressIndicator(),
+                    )
+                        : ListView.builder(
                       scrollDirection: Axis.horizontal,
-                      children: const [
-                        _DoctorCard(
-                          name: "Dr. Anjali Sharma",
-                          title: "Orthodontist",
-                          experience: "12 yrs exp",
+                      itemCount: doctors.length,
+                      itemBuilder: (context, index) {
+
+                        final doctor = doctors[index];
+
+                        return _DoctorCard(
+                          name: doctor["full_name"] ?? "Doctor",
+                          title: doctor["specialization"] ?? "Dental Specialist",
+                          experience:
+                          "${doctor["years_of_experience"] ?? 0} yrs exp",
                           rating: "4.9",
-                        ),
-                        _DoctorCard(
-                          name: "Dr. Rohan Mehta",
-                          title: "Oral Surgeon",
-                          experience: "15 yrs exp",
-                          rating: "4.8",
-                        ),
-                        _DoctorCard(
-                          name: "Dr. Priya Nair",
-                          title: "Periodontist",
-                          experience: "9 yrs exp",
-                          rating: "4.7",
-                        ),
-                      ],
+                        );
+                      },
                     ),
                   ),
 
@@ -398,6 +457,29 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                     ),
                   ),
 
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () async {
+
+                        final image =
+                        await screenshotController.capture();
+
+                        if (image != null) {
+
+                          if (!context.mounted) return;
+
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text("Long screenshot captured"),
+                            ),
+                          );
+                        }
+                      },
+                      child: const Text("Capture Long Screenshot"),
+                    ),
+                  ),
+
                   const SizedBox(height: 16),
                 ],
               ),
@@ -405,6 +487,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
           ),
         ),
       ),
+    ),
     );
   }
 }

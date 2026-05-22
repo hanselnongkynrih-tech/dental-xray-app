@@ -51,7 +51,7 @@ async def get_logged_in_user(current_user: UserOut = Depends(get_current_user)):
 # LIST DOCTORS
 # ===============================
 @router.get("/doctors")
-async def list_doctors(current_user: UserOut = Depends(get_current_user)):
+async def list_doctors():
     rows = await get_doctors()
     return [dict(r) for r in rows]
 

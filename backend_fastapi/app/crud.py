@@ -40,21 +40,25 @@ async def authenticate_user(mobile_number: str, password: str):
     return None
 
 async def get_doctors():
+
+    query = """
+    SELECT
+        u.id,
+        u.full_name,
+        u.mobile_number,
+        u.email,
+        u.role,
+        dp.specialization,
+        dp.years_of_experience
+    FROM users u
+    LEFT JOIN doctor_profiles dp
+        ON u.id = dp.user_id
+    WHERE u.role = 'doctor'
     """
-    Return all users with role='doctor' for dropdown in patient registration.
-    """
-    query = (
-        select(
-            users.c.id,
-            users.c.full_name,
-            users.c.mobile_number,
-            users.c.email,
-            users.c.role,
-        )
-        .where(users.c.role == "doctor")
-    )
+
     rows = await database.fetch_all(query)
-    return rows
+
+    return [dict(r) for r in rows]
 
 # === DOCTOR PROFILE ===
 async def create_doctor_profile(user_id: int, profile_data: dict):

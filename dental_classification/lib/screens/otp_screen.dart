@@ -79,11 +79,26 @@ class _OtpScreenState extends State<OtpScreen> {
   }
 
   void _navigateToDashboard(String role) {
+
+    String route = '/patient_dashboard';
+
+    if (role == 'doctor') {
+      route = '/doctor_dashboard';
+    }
+    else if (role == 'patient') {
+      route = '/patient_dashboard';
+    }
+    else if (role == 'lab') {
+      route = '/lab_dashboard';
+    }
+    else {
+      route = '/admin_dashboard';
+    }
+
     Navigator.pushNamedAndRemoveUntil(
       context,
-      '/dashboard',
-          (route) => false, // This clears the navigation history
-      arguments: role,
+      route,
+          (route) => false,
     );
   }
 

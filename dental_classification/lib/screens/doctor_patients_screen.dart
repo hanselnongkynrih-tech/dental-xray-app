@@ -60,9 +60,9 @@ class _DoctorPatientsScreenState extends State<DoctorPatientsScreen> {
             margin: const EdgeInsets.all(10),
             child: ListTile(
               leading: const Icon(Icons.person),
-              title: Text(p['patient_name'] ?? 'Unknown'),
+              title: Text(p['full_name'] ?? 'Unknown'),
               subtitle:
-              Text("Token No: ${p['token_number'] ?? 'N/A'}"),
+              Text(p['mobile_number'] ?? ''),
               trailing: const Icon(Icons.arrow_forward),
 
               onTap: () {
@@ -71,7 +71,7 @@ class _DoctorPatientsScreenState extends State<DoctorPatientsScreen> {
                     MaterialPageRoute(
                         builder: (_) => DoctorImagesScreen(
                             patientId: p['patient_user_id'],
-                            patientName: p['patient_name'],
+                            patientName: p['full_name'],
                         )));
               },
             ),

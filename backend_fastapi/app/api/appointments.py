@@ -58,3 +58,20 @@ async def get_doctor_appointments(current_user=Depends(get_current_user)):
     )
     result = await database.fetch_all(query)
     return result
+
+@router.put("/appointments/update-status")
+async def update_appointment_status(
+    appointment_id: int,
+    status: str,
+    current_user=Depends(get_current_user)
+):
+    if status not in ["accepted", "rejected"]:
+        raise HTTPException(status_code=400, detail="Invalid status")
+
+    query = appointments.update().where(
+        appointments.c.id == appointment_id
+    ).values(status=status)
+
+    await database.execute(query)
+
+    return {"message": "Status updated"}

@@ -17,10 +17,10 @@ async def get_doctor_dashboard(current_user=Depends(get_current_user)):
     # ✅ PATIENT COUNT (ASSIGNED TO DOCTOR)
     # ===============================
     patients = await database.fetch_all("""
-        SELECT *
-        FROM patient_profiles
-        WHERE doctor_user_id = :id
-    """, {"id": current_user.id})
+    SELECT DISTINCT patient_id
+    FROM appointments
+    WHERE doctor_id = :id
+""", {"id": current_user.id})
 
     # ===============================
     # ✅ CASES (IMAGES FOR DOCTOR)
@@ -53,16 +53,14 @@ async def get_doctor_patients(current_user=Depends(get_current_user)):
     if current_user.role != "doctor":
         raise HTTPException(status_code=403)
 
-    from app.database import database
-
     rows = await database.fetch_all("""
-        SELECT 
+        SELECT DISTINCT
             u.id,
             u.full_name,
             u.mobile_number
-        FROM users u
-        JOIN patient_profiles p ON u.id = p.user_id
-        WHERE p.doctor_user_id = :id
+        FROM appointments a
+        JOIN users u ON a.patient_id = u.id
+        WHERE a.doctor_id = :id
     """, {"id": current_user.id})
 
     return [dict(r) for r in rows]

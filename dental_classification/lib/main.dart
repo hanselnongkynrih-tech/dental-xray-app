@@ -17,11 +17,12 @@ import 'screens/lab_profile_screen.dart';
 
 import 'screens/otp_screen.dart';
 
+import 'screens/doctor_dashboard_screen.dart';
+import 'screens/patient_dashboard_screen.dart';
+import 'screens/lab_dashboard_screen.dart';
 import 'screens/admin_dashboard_screen.dart';
 
 import 'screens/splash_screen.dart';
-
-import 'screens/dashboard_screen.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -29,6 +30,8 @@ import 'services/auth_service.dart';
 
 import 'screens/doctor_images_screen.dart';
 import 'screens/doctor_patients_screen.dart';
+
+import 'screens/doctor_appointments_screen.dart';
 
 
 Future<void> main() async {
@@ -123,20 +126,26 @@ class DentalClassificationApp extends StatelessWidget {
 
         '/doctor_patients': (context) => const DoctorPatientsScreen(),
 
+        '/doctor_appointments': (context) =>
+        const DoctorAppointmentsScreen(),
+
         '/patient_profile': (context) =>
         const PatientProfileScreen(),
 
         '/lab_profile': (context) =>
         const LabProfileScreen(),
 
-        '/dashboard': (context) {
-          final role = ModalRoute.of(context)!.settings.arguments as String;
-          return DashboardScreen(role: role);
-        },
+        '/doctor_dashboard': (context) =>
+        const DoctorDashboardScreen(),
+
+        '/patient_dashboard': (context) =>
+        const PatientDashboardScreen(),
+
+        '/lab_dashboard': (context) =>
+        const LabDashboardScreen(),
 
         '/admin_dashboard': (context) =>
         const AdminDashboardScreen(),
-
 
         '/otp': (context) {
           // ✅ Extract the Map instead of a String
@@ -199,14 +208,33 @@ class _AppStartRouterState extends State<AppStartRouter> {
 
     if (token != null && token.isNotEmpty && role != null) {
       debugPrint("GO TO DASHBOARD");
+
+      String route = '/welcome';
+
+      if (role == 'doctor') {
+        route = '/doctor_dashboard';
+      }
+      else if (role == 'patient') {
+        route = '/patient_dashboard';
+      }
+      else if (role == 'lab') {
+        route = '/lab_dashboard';
+      }
+      else {
+        route = '/admin_dashboard';
+      }
+
       Navigator.pushReplacementNamed(
         context,
-        '/dashboard',
-        arguments: role,
+        route,
       );
     } else {
       debugPrint("GO TO WELCOME");
-      Navigator.pushReplacementNamed(context, '/welcome');
+
+      Navigator.pushReplacementNamed(
+        context,
+        '/welcome',
+      );
     }
   }
 
