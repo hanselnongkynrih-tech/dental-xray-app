@@ -1,16 +1,27 @@
 from sqlalchemy import select
+from fastapi import HTTPException
+from datetime import datetime, timedelta
 
 from app.database import database
 from app.models import users, doctor_profiles, patient_profiles, lab_profiles
 from passlib.context import CryptContext
 
+
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
+
 def hash_password(password: str) -> str:
+    if len(password.encode('utf-8')) > 72:
+        raise HTTPException(
+            status_code=422,
+            detail="Password must not exceed 72 characters"
+        )
     return pwd_context.hash(password)
+
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
+
 
 # === USERS ===
 async def create_user(full_name: str, mobile_number: str, email: str, password: str, role: str) -> int:
@@ -25,13 +36,16 @@ async def create_user(full_name: str, mobile_number: str, email: str, password: 
     user_id = await database.execute(query)
     return user_id
 
+
 async def get_user_by_mobile(mobile_number: str):
     query = users.select().where(users.c.mobile_number == mobile_number)
     return await database.fetch_one(query)
 
+
 async def get_user_by_id(user_id: int):
     query = users.select().where(users.c.id == user_id)
     return await database.fetch_one(query)
+
 
 async def authenticate_user(mobile_number: str, password: str):
     user = await get_user_by_mobile(mobile_number)
@@ -39,8 +53,8 @@ async def authenticate_user(mobile_number: str, password: str):
         return user
     return None
 
-async def get_doctors():
 
+async def get_doctors():
     query = """
     SELECT
         u.id,
@@ -55,10 +69,9 @@ async def get_doctors():
         ON u.id = dp.user_id
     WHERE u.role = 'doctor'
     """
-
     rows = await database.fetch_all(query)
-
     return [dict(r) for r in rows]
+
 
 # === DOCTOR PROFILE ===
 async def create_doctor_profile(user_id: int, profile_data: dict):
@@ -67,9 +80,11 @@ async def create_doctor_profile(user_id: int, profile_data: dict):
     query = doctor_profiles.insert().values(**data)
     return await database.execute(query)
 
+
 async def get_doctor_profile_by_user_id(user_id: int):
     query = doctor_profiles.select().where(doctor_profiles.c.user_id == user_id)
     return await database.fetch_one(query)
+
 
 # === PATIENT PROFILE ===
 async def create_patient_profile(user_id: int, profile_data: dict):
@@ -78,9 +93,11 @@ async def create_patient_profile(user_id: int, profile_data: dict):
     query = patient_profiles.insert().values(**data)
     return await database.execute(query)
 
+
 async def get_patient_profile_by_user_id(user_id: int):
     query = patient_profiles.select().where(patient_profiles.c.user_id == user_id)
     return await database.fetch_one(query)
+
 
 async def get_patients_for_doctor(doctor_user_id: int):
     """
@@ -104,6 +121,7 @@ async def get_patients_for_doctor(doctor_user_id: int):
     rows = await database.fetch_all(query)
     return [dict(row) for row in rows]
 
+
 # === LAB PROFILE ===
 async def create_lab_profile(user_id: int, profile_data: dict):
     data = {"user_id": user_id}
@@ -111,11 +129,13 @@ async def create_lab_profile(user_id: int, profile_data: dict):
     query = lab_profiles.insert().values(**data)
     return await database.execute(query)
 
+
 async def get_lab_profile_by_user_id(user_id: int):
     query = lab_profiles.select().where(lab_profiles.c.user_id == user_id)
     return await database.fetch_one(query)
-# ======= ******* Images upload ********** ===========
 
+
+# === IMAGES ===
 async def get_images_for_doctor(doctor_id: int):
     query = """
     SELECT 
@@ -128,35 +148,28 @@ async def get_images_for_doctor(doctor_id: int):
     JOIN users u ON i.user_id = u.id
     WHERE i.doctor_user_id = :doctor_id
     """
-
     rows = await database.fetch_all(
         query=query,
         values={"doctor_id": doctor_id}
     )
-
     return [dict(row) for row in rows]
 
-# ========== ********* Lab Results ********** ===========
-async def get_lab_results_for_doctor(doctor_id: int):
 
+# === LAB RESULTS ===
+async def get_lab_results_for_doctor(doctor_id: int):
     query = """
     SELECT * FROM lab_results
     WHERE doctor_user_id = :doctor_id
     """
-
     rows = await database.fetch_all(
         query=query,
         values={"doctor_id": doctor_id}
     )
-
     return [dict(row) for row in rows]
 
-# ========== ********* Token Generation ********** =========== 
-from datetime import datetime, timedelta
 
+# === TOKEN GENERATION ===
 async def generate_token_for_patient(user_id: int):
-
-    # get patient
     patient = await get_patient_profile_by_user_id(user_id)
 
     if not patient:
@@ -164,19 +177,18 @@ async def generate_token_for_patient(user_id: int):
 
     doctor_id = patient["doctor_user_id"]
 
-    # ✅ 2 AM RESET LOGIC
+    # 2 AM reset logic
     now = datetime.utcnow()
     adjusted_time = now - timedelta(hours=2)
     today = adjusted_time.date()
 
-    # 🔥 get max token for THIS DOCTOR TODAY
+    # Get max token for this doctor today
     query = """
     SELECT MAX(token_number) as max_token
     FROM patient_profiles
     WHERE token_date = :today
     AND doctor_user_id = :doctor_id
     """
-
     row = await database.fetch_one(
         query=query,
         values={"today": today, "doctor_id": doctor_id}
@@ -184,16 +196,12 @@ async def generate_token_for_patient(user_id: int):
 
     next_token = (row["max_token"] or 0) + 1
 
-    # update patient with new token
     update_query = patient_profiles.update().where(
         patient_profiles.c.user_id == user_id
     ).values(
         token_number=next_token,
         token_date=today
     )
-
     await database.execute(update_query)
 
     return next_token
-
-# === (OPTIONAL) Add update and delete functions here for advanced features ===
