@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../services/auth_service.dart';
-import '../services/firebase_auth_service.dart'; // ✅ NEW
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -42,10 +42,6 @@ class _LoginScreenState extends State<LoginScreen> {
 // 🔥 backend version (NO +91)
     String backendPhone = input.replaceAll("+91", "");
 
-// 🔥 firebase version (WITH +91)
-    String firebasePhone = input.startsWith("+91")
-        ? input
-        : "+91$input";
 
     final password = _passwordController.text;
 
@@ -57,45 +53,125 @@ class _LoginScreenState extends State<LoginScreen> {
       //DEBUG
       debugPrint("BACKEND RESPONSE: $response"); // 👈 ADD HERE
 
-      if (response == null || !response.containsKey("mobile_number")) {
+      if (response == null || !response.containsKey("access_token")) {
         setState(() {
           _errorMessage = "Invalid mobile number or password";
           _isLoading = false;
         });
         return;
       }
+      debugPrint("LOGIN RESPONSE = $response");
 
       // 🔥 AFTER BACKEND SUCCESS → SEND FIREBASE OTP
-      final firebaseService = FirebaseAuthService();
+      final String userRole =
+          response['role'] ?? 'patient';
 
-      await firebaseService.sendOtp(
-        phoneNumber: firebasePhone,
+      final prefs =
+      await SharedPreferences.getInstance();
 
-        onCodeSent: () {
-          if (!mounted) return;
-
-          // 1. Get the role from the backend response
-          final String userRole = response['role'] ?? 'patient';
-
-          Navigator.pushNamed(
-            context,
-            '/otp',
-            // 2. CHANGE: Send the Map here
-            arguments: {
-              'mobileNumber': backendPhone,
-              'role': userRole,
-            },
-          );
-        },
-
-        onError: (error) {
-          setState(() {
-            _errorMessage = error;
-            _isLoading = false;
-          });
-        },
+      await prefs.setString(
+        "role",
+        userRole,
       );
 
+      if (!mounted) return;
+
+      final user =
+      await authService.getCurrentUser();
+
+      if (user == null) {
+        return;
+      }
+
+      final int userId = user['id'];
+
+      if (userRole == "doctor") {
+
+        final exists =
+        await authService.doctorProfileExists(
+            userId);
+
+        if (exists) {
+
+          if (!mounted) return;
+
+          Navigator.pushReplacementNamed(
+            context,
+            '/doctor_dashboard',
+          );
+
+        } else {
+
+          if (!mounted) return;
+
+          Navigator.pushReplacementNamed(
+            context,
+            '/doctor_registration',
+          );
+        }
+      }
+
+      else if (userRole == "patient") {
+
+        final exists =
+        await authService.patientProfileExists(
+            userId);
+
+        if (exists) {
+
+          if (!mounted) return;
+
+          Navigator.pushReplacementNamed(
+            context,
+            '/patient_dashboard',
+          );
+
+        } else {
+
+          if (!mounted) return;
+
+          Navigator.pushReplacementNamed(
+            context,
+            '/patient_registration',
+          );
+        }
+      }
+
+      else if (userRole == "lab") {
+
+        final exists =
+        await authService.labProfileExists(
+            userId);
+
+        if (exists) {
+
+          if (!mounted) return;
+
+          Navigator.pushReplacementNamed(
+            context,
+            '/lab_dashboard',
+          );
+
+        } else {
+
+          if (!mounted) return;
+
+          Navigator.pushReplacementNamed(
+            context,
+            '/lab_registration',
+          );
+        }
+      }
+
+      else {
+
+        if (!mounted) return;
+
+        Navigator.pushReplacementNamed(
+          context,
+          '/admin_dashboard',
+        );
+      }
     } catch (e) {
       setState(() {
         _errorMessage = "Login failed: $e";
@@ -214,7 +290,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       obscureText: true,
 
                       decoration: const InputDecoration(
-                        labelText: "Password (not used)",
+                        labelText: "Password",
                         prefixIcon: Icon(Icons.lock),
                       ),
 
@@ -242,7 +318,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             ? const CircularProgressIndicator(
                           color: Colors.white,
                         )
-                            : const Text("Send OTP"),
+                            : const Text("Login"),
 
                       ),
 

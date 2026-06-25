@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 
 import '../services/auth_service.dart';
 import '../utils/constants.dart';
+import '../api/api_client.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -19,9 +20,16 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
   List<Map<String, dynamic>> users = [];
   List<Map<String, dynamic>> images = [];
+  List<Map<String, dynamic>> appointments = [];
+
+  int doctors = 0;
+  int patients = 0;
+  int labs = 0;
+  int admins = 0;
 
   bool isLoadingUsers = true;
   bool isLoadingImages = true;
+  bool isLoadingAppointments = true;
 
   String selectedPage = ""; // 🔥 NOTHING selected initially
 
@@ -30,6 +38,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     super.initState();
     fetchUsers();
     fetchImages();
+    fetchAppointments();
   }
 
   // =========================
@@ -37,17 +46,38 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   // =========================
   Future<void> fetchUsers() async {
     final token = await _authService.getToken();
+    debugPrint("USERS TOKEN = $token");
 
     final response = await http.get(
       Uri.parse('${Constants.apiBaseUrl}/users/all'),
       headers: {'Authorization': 'Bearer $token'},
     );
+    debugPrint("USERS STATUS = ${response.statusCode}");
+    debugPrint("USERS BODY = ${response.body}");
 
     if (response.statusCode == 200) {
       final List<dynamic> data = jsonDecode(response.body);
 
       setState(() {
+
         users = data.cast<Map<String, dynamic>>();
+
+        doctors = users
+            .where((u) => u['role'] == "doctor")
+            .length;
+
+        patients = users
+            .where((u) => u['role'] == "patient")
+            .length;
+
+        labs = users
+            .where((u) => u['role'] == "lab")
+            .length;
+
+        admins = users
+            .where((u) => u['role'] == "admin")
+            .length;
+
         isLoadingUsers = false;
       });
     }
@@ -58,11 +88,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   // =========================
   Future<void> fetchImages() async {
     final token = await _authService.getToken();
+    debugPrint("IMAGES TOKEN = $token");
 
     final response = await http.get(
       Uri.parse('${Constants.apiBaseUrl}/images/all'),
       headers: {'Authorization': 'Bearer $token'},
     );
+    debugPrint("IMAGES STATUS = ${response.statusCode}");
+    debugPrint("IMAGES BODY = ${response.body}");
 
     if (response.statusCode == 200) {
       final List<dynamic> data = jsonDecode(response.body);
@@ -70,6 +103,39 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       setState(() {
         images = data.cast<Map<String, dynamic>>();
         isLoadingImages = false;
+      });
+    }
+  }
+
+  // =========================
+  // FETCH Appointments
+  // =========================
+  Future<void> fetchAppointments() async {
+
+    final token = await _authService.getToken();
+    debugPrint("APPOINTMENTS TOKEN = $token");
+
+    final response = await http.get(
+      Uri.parse(
+        '${Constants.apiBaseUrl}/appointments/admin/all',
+      ),
+      headers: {
+        'Authorization': 'Bearer $token',
+      },
+    );
+    debugPrint("APPOINTMENTS STATUS = ${response.statusCode}");
+    debugPrint("APPOINTMENTS BODY = ${response.body}");
+
+    if (response.statusCode == 200) {
+
+      final List<dynamic> data =
+      jsonDecode(response.body);
+
+      setState(() {
+        appointments =
+            data.cast<Map<String, dynamic>>();
+
+        isLoadingAppointments = false;
       });
     }
   }
@@ -149,7 +215,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               ),
               borderRadius: BorderRadius.circular(16),
             ),
-            child: const Row(
+            child: Row(
               children: [
                 Expanded(
                   child: Column(
@@ -159,11 +225,20 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                           style: TextStyle(color: Colors.white70)),
                       SizedBox(height: 5),
                       Text(
-                        "System Control Panel",
+                        "Dental Clinic Control Center",
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+
+                      Text(
+                        "${appointments.length} appointments • "
+                            "${users.length} users",
+                        style: const TextStyle(
+                          color: Colors.white70,
                         ),
                       ),
                     ],
@@ -178,10 +253,72 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           // 🔷 STATS
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
+            child: Column(
               children: [
-                _StatCard("Users", users.length.toString(), Icons.people),
-                _StatCard("Images", images.length.toString(), Icons.image),
+
+                Row(
+                  children: [
+
+                    _StatCard(
+                      "Doctors",
+                      doctors.toString(),
+                      Icons.medical_services,
+                    ),
+
+                    _StatCard(
+                      "Patients",
+                      patients.toString(),
+                      Icons.people,
+                    ),
+
+                  ],
+                ),
+
+                const SizedBox(height: 10),
+
+                Row(
+                  children: [
+
+                    _StatCard(
+                      "Labs",
+                      labs.toString(),
+                      Icons.science,
+                    ),
+
+                    _StatCard(
+                      "Admins",
+                      admins.toString(),
+                      Icons.admin_panel_settings,
+                    ),
+
+                  ],
+                ),
+
+                const SizedBox(height: 10),
+
+                Row(
+                  children: [
+
+                    _StatCard(
+                      "Appointments",
+                      appointments.length.toString(),
+                      Icons.calendar_today,
+                    ),
+
+                    _StatCard(
+                      "Pending",
+                      appointments
+                          .where(
+                            (a) => a['status'] == "pending",
+                      )
+                          .length
+                          .toString(),
+                      Icons.pending_actions,
+                    ),
+
+                  ],
+                ),
+
               ],
             ),
           ),
@@ -194,19 +331,174 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 ? _buildUsers()
                 : selectedPage == "images"
                 ? _buildImages()
-                : const Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.dashboard,
-                      size: 60, color: Colors.grey),
-                  SizedBox(height: 10),
-                  Text(
-                    "Select Users or Images from menu",
-                    style: TextStyle(fontSize: 16),
+                : selectedPage == "appointments"
+                ? _buildAppointments()
+                : ListView(
+              padding: const EdgeInsets.all(16),
+
+              children: [
+
+                const Text(
+                  "Recent Appointments",
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
                   ),
-                ],
-              ),
+                ),
+
+                const SizedBox(height: 10),
+
+                if (appointments.isEmpty)
+
+                  const Card(
+                    child: Padding(
+                      padding: EdgeInsets.all(20),
+                      child: Text(
+                        "No appointments yet",
+                      ),
+                    ),
+                  )
+
+                else
+
+                  ...appointments.take(5).map(
+                        (appointment) => Card(
+                      elevation: 3,
+
+                      shape: RoundedRectangleBorder(
+                        borderRadius:
+                        BorderRadius.circular(12),
+                      ),
+
+                      child: ListTile(
+
+                        leading: const CircleAvatar(
+                          child: Icon(
+                            Icons.calendar_today,
+                          ),
+                        ),
+
+                        title: Text(
+                          appointment['specialization']
+                              .toString(),
+                        ),
+
+                        subtitle: Text(
+                          "Patient ID: "
+                              "${appointment['patient_id']}",
+                        ),
+
+                        trailing: Text(
+                          appointment['status']
+                              .toUpperCase(),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                const SizedBox(height: 20),
+
+                const Text(
+                  "Quick Actions",
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+
+                const SizedBox(height: 10),
+
+                Row(
+                  children: [
+
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        icon: const Icon(
+                          Icons.calendar_today,
+                        ),
+
+                        label: const Text(
+                          "Appointments",
+                        ),
+
+                        onPressed: () {
+                          setState(() {
+                            selectedPage =
+                            "appointments";
+                          });
+                        },
+                      ),
+                    ),
+
+                    const SizedBox(width: 10),
+
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        icon: const Icon(
+                          Icons.people,
+                        ),
+
+                        label: const Text(
+                          "Users",
+                        ),
+
+                        onPressed: () {
+                          setState(() {
+                            selectedPage =
+                            "users";
+                          });
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 10),
+
+                Row(
+                  children: [
+
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        icon: const Icon(
+                          Icons.image,
+                        ),
+
+                        label: const Text(
+                          "Images",
+                        ),
+
+                        onPressed: () {
+                          setState(() {
+                            selectedPage =
+                            "images";
+                          });
+                        },
+                      ),
+                    ),
+
+                    const SizedBox(width: 10),
+
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        icon: const Icon(
+                          Icons.refresh,
+                        ),
+
+                        label: const Text(
+                          "Refresh",
+                        ),
+
+                        onPressed: () {
+                          fetchUsers();
+                          fetchImages();
+                          fetchAppointments();
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
         ],
@@ -248,6 +540,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             Navigator.pop(context);
             setState(() => selectedPage = "images");
           }),
+
+          _drawerItem(
+            Icons.calendar_today,
+            "Appointments",
+                () {
+              Navigator.pop(context);
+              setState(() => selectedPage = "appointments");
+            },
+          ),
 
           const Divider(),
 
@@ -354,6 +655,179 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           ),
         );
       }).toList(),
+    );
+  }
+
+  Widget _buildAppointments() {
+
+    if (isLoadingAppointments) {
+      return const Center(
+        child: CircularProgressIndicator(),
+      );
+    }
+
+    return ListView.builder(
+      itemCount: appointments.length,
+
+      itemBuilder: (context, index) {
+
+        final appointment =
+        appointments[index];
+
+        return Card(
+          elevation: 5,
+          margin: const EdgeInsets.all(10),
+
+          shape: RoundedRectangleBorder(
+            borderRadius:
+            BorderRadius.circular(18),
+          ),
+
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+
+            child: Column(
+              crossAxisAlignment:
+              CrossAxisAlignment.start,
+
+              children: [
+
+                Text(
+                  "Patient ID: ${appointment['patient_id']}",
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+
+                Text(
+                  "Doctor ID: ${appointment['doctor_id']}",
+                ),
+
+                Text(
+                  "Specialization: ${appointment['specialization']}",
+                ),
+
+                Text(
+                  "Date: ${appointment['date']}",
+                ),
+
+                Text(
+                  "Time: ${appointment['time']}",
+                ),
+
+                const SizedBox(height: 10),
+
+                Divider(),
+
+                const SizedBox(height: 10),
+
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+
+                  decoration: BoxDecoration(
+                    color: appointment['status'] ==
+                        "accepted"
+                        ? Colors.green.shade100
+                        : appointment['status'] ==
+                        "pending"
+                        ? Colors.orange.shade100
+                        : Colors.red.shade100,
+
+                    borderRadius:
+                    BorderRadius.circular(20),
+                  ),
+
+                  child: Text(
+                    appointment['status']
+                        .toUpperCase(),
+
+                    style: TextStyle(
+                      color: appointment['status'] ==
+                          "accepted"
+                          ? Colors.green.shade900
+                          : appointment['status'] ==
+                          "pending"
+                          ? Colors.orange.shade900
+                          : Colors.red.shade900,
+
+                      fontWeight:
+                      FontWeight.bold,
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 10),
+
+                if (appointment['status'] == "pending")
+                  Row(
+                    children: [
+
+                      Expanded(
+                        child: ElevatedButton(
+
+                          onPressed: () async {
+
+                            await ApiClient()
+                                .updateAppointmentStatus(
+                              appointmentId:
+                              appointment['id'],
+                              status: "accepted",
+                            );
+
+                            fetchAppointments();
+                          },
+
+                          child: const Row(
+                            mainAxisAlignment:
+                            MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.check),
+                              SizedBox(width: 5),
+                              Text("Accept"),
+                            ],
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(width: 10),
+
+                      Expanded(
+                        child: ElevatedButton(
+
+                          onPressed: () async {
+
+                            await ApiClient()
+                                .updateAppointmentStatus(
+                              appointmentId:
+                              appointment['id'],
+                              status: "rejected",
+                            );
+
+                            fetchAppointments();
+                          },
+
+                          child: const Row(
+                            mainAxisAlignment:
+                            MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.close),
+                              SizedBox(width: 5),
+                              Text("Reject"),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

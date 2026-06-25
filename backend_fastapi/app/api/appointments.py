@@ -65,8 +65,22 @@ async def update_appointment_status(
     status: str,
     current_user=Depends(get_current_user)
 ):
-    if status not in ["accepted", "rejected"]:
-        raise HTTPException(status_code=400, detail="Invalid status")
+
+    if current_user.role != "admin":
+        raise HTTPException(
+            status_code=403,
+            detail="Only admin can update appointments"
+        )
+
+    if status not in [
+    "pending",
+    "accepted",
+    "rejected"
+    ]:
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid status"
+        )
 
     query = appointments.update().where(
         appointments.c.id == appointment_id
@@ -75,3 +89,20 @@ async def update_appointment_status(
     await database.execute(query)
 
     return {"message": "Status updated"}
+
+@router.get("/appointments/admin/all")
+async def get_all_appointments(
+    current_user=Depends(get_current_user)
+):
+
+    if current_user.role != "admin":
+        raise HTTPException(
+            status_code=403,
+            detail="Only admin can view all appointments"
+        )
+
+    result = await database.fetch_all(
+        appointments.select()
+    )
+
+    return result

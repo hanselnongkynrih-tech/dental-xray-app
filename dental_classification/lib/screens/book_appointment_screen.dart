@@ -2,7 +2,13 @@ import 'package:flutter/material.dart';
 import '../api/api_client.dart';
 
 class BookAppointmentScreen extends StatefulWidget {
-  const BookAppointmentScreen({super.key});
+
+  final String? specialization;
+
+  const BookAppointmentScreen({
+    super.key,
+    this.specialization,
+  });
 
   @override
   State<BookAppointmentScreen> createState() =>
@@ -31,6 +37,9 @@ class _BookAppointmentScreenState extends State<BookAppointmentScreen> {
   @override
   void initState() {
     super.initState();
+
+    selectedSpecialization = widget.specialization;
+
     loadDoctors();
   }
 

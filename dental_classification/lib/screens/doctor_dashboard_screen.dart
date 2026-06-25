@@ -223,71 +223,31 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
 
                     const SizedBox(height: 10),
 
-                    if (appointment['status'] == "pending")
-                      Row(
-                        children: [
-
-                          Expanded(
-                            child: ElevatedButton(
-                              onPressed: () async {
-
-                                await ApiClient().updateAppointmentStatus(
-                                  appointmentId: appointment['id'],
-                                  status: "accepted",
-                                );
-
-                                loadAppointments();
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.green,
-                              ),
-                              child: const Text("Accept"),
-                            ),
-                          ),
-
-                          const SizedBox(width: 10),
-
-                          Expanded(
-                            child: ElevatedButton(
-                              onPressed: () async {
-
-                                await ApiClient().updateAppointmentStatus(
-                                  appointmentId: appointment['id'],
-                                  status: "rejected",
-                                );
-
-                                loadAppointments();
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.red,
-                              ),
-                              child: const Text("Reject"),
-                            ),
-                          ),
-                        ],
-                      )
-                    else
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 8,
-                        ),
-                        decoration: BoxDecoration(
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: appointment['status'] == "accepted"
+                            ? Colors.green.shade100
+                            : appointment['status'] == "pending"
+                            ? Colors.orange.shade100
+                            : Colors.red.shade100,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        appointment['status'].toUpperCase(),
+                        style: TextStyle(
                           color: appointment['status'] == "accepted"
-                              ? Colors.green.shade100
-                              : Colors.red.shade100,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          appointment['status'].toUpperCase(),
-                          style: TextStyle(
-                            color: appointment['status'] == "accepted"
-                                ? Colors.green
-                                : Colors.red,
-                            fontWeight: FontWeight.bold,
-                          ),
+                              ? Colors.green
+                              : appointment['status'] == "pending"
+                              ? Colors.orange
+                              : Colors.red,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
+                    ),
                   ],
                 ),
               ),

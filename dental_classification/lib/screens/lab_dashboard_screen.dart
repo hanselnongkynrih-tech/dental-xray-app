@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../api/api_client.dart';
 import '../services/auth_service.dart';
 
 class LabDashboardScreen extends StatefulWidget {
@@ -10,6 +11,44 @@ class LabDashboardScreen extends StatefulWidget {
 }
 
 class _LabDashboardScreenState extends State<LabDashboardScreen> {
+  final ApiClient _apiClient = ApiClient();
+  final AuthService _authService = AuthService();
+
+  int pending = 0;
+  int completed = 0;
+  int uploads = 0;
+
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    loadDashboard();
+  }
+
+  Future<void> loadDashboard() async {
+    try {
+      final user = await _authService.getCurrentUser();
+
+      if (user == null) return;
+
+      final data =
+      await _apiClient.getLabDashboard(user['id']);
+
+      setState(() {
+        pending = data['pending'] ?? 0;
+        completed = data['completed'] ?? 0;
+        uploads = data['uploads'] ?? 0;
+        isLoading = false;
+      });
+    } catch (e) {
+      debugPrint("LAB DASHBOARD ERROR: $e");
+
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
 
   // 🔥 LOGOUT
   Future<void> _logout() async {
@@ -87,10 +126,24 @@ class _LabDashboardScreenState extends State<LabDashboardScreen> {
 
           // 🔷 STATS
           Row(
-            children: const [
-              _StatCard("Pending", "0", Icons.pending),
-              _StatCard("Completed", "0", Icons.check_circle),
-              _StatCard("Uploads", "0", Icons.upload),
+            children: [
+              _StatCard(
+                "Pending",
+                pending.toString(),
+                Icons.pending,
+              ),
+
+              _StatCard(
+                "Completed",
+                completed.toString(),
+                Icons.check_circle,
+              ),
+
+              _StatCard(
+                "Uploads",
+                uploads.toString(),
+                Icons.upload,
+              ),
             ],
           ),
         ],
@@ -139,7 +192,14 @@ class _LabDashboardScreenState extends State<LabDashboardScreen> {
 
           _drawerItem(Icons.upload, "Upload Results", () {
             Navigator.pop(context);
-            Navigator.pushNamed(context, '/lab_upload');
+
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text(
+                  "Select a request first from View Requests",
+                ),
+              ),
+            );
           }),
 
           _drawerItem(Icons.history, "History", () {

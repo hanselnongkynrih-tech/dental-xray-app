@@ -31,23 +31,29 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
 # =========================
 @router.post("/login")
 async def login(form_data: OAuth2PasswordRequestForm = Depends()):
-    print(" NEW OTP LOGIN FUNCTION CALLED")
-    user = await authenticate_user(form_data.username, form_data.password)
+
+    user = await authenticate_user(
+        form_data.username,
+        form_data.password
+    )
 
     if not user:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
+            status_code=401,
             detail="Incorrect mobile number or password"
         )
 
-    # Password correct → Send OTP
-    otp = send_otp(user.mobile_number)
+    access_token = create_access_token(
+        data={
+            "sub": str(user.id),
+            "role": user.role
+        }
+    )
 
     return {
-        "message": "Password verified. OTP sent to registered mobile.",
-        "mobile_number": user.mobile_number,
-        "role": user.role,   # 🔥 ADD THIS LINE
-        "dev_otp": otp
+        "access_token": access_token,
+        "token_type": "bearer",
+        "role": user.role
     }
 
 

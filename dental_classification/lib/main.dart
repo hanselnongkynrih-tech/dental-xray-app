@@ -33,6 +33,8 @@ import 'screens/doctor_patients_screen.dart';
 
 import 'screens/doctor_appointments_screen.dart';
 
+import 'screens/lab_requests_screen.dart';
+
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized(); // ✅ IMPORTANT
@@ -143,6 +145,9 @@ class DentalClassificationApp extends StatelessWidget {
 
         '/lab_dashboard': (context) =>
         const LabDashboardScreen(),
+
+        '/lab_requests': (context) =>
+        const LabRequestsScreen(),
 
         '/admin_dashboard': (context) =>
         const AdminDashboardScreen(),

@@ -23,7 +23,14 @@ class AuthService {
     );
 
     if (response.statusCode == 200) {
-      return jsonDecode(response.body);
+
+      final data = jsonDecode(response.body);
+
+      await saveToken(
+        data['access_token'],
+      );
+
+      return data;
     }
 
     return null;
@@ -56,8 +63,19 @@ class AuthService {
     return false;
   }
 
-  Future<String?> getToken() async =>
-      _storage.read(key: 'jwt_token');
+  Future<String?> getToken() async {
+
+    final token = await _storage.read(
+      key: 'jwt_token',
+    );
+
+    print("================================");
+    print("JWT TOKEN:");
+    print(token);
+    print("================================");
+
+    return token;
+  }
 
   // ================= NEW: SAVE TOKEN =================
   Future<void> saveToken(String token) async {
@@ -103,5 +121,56 @@ class AuthService {
   Future<bool> isLoggedIn() async {
     final token = await getToken();
     return token != null;
+  }
+
+  Future<bool> doctorProfileExists(int userId) async {
+    final token = await getToken();
+
+    if (token == null) return false;
+
+    final response = await http.get(
+      Uri.parse(
+        '${Constants.apiBaseUrl}/doctor/profile/$userId',
+      ),
+      headers: {
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    return response.statusCode == 200;
+  }
+
+  Future<bool> patientProfileExists(int userId) async {
+    final token = await getToken();
+
+    if (token == null) return false;
+
+    final response = await http.get(
+      Uri.parse(
+        '${Constants.apiBaseUrl}/patient/profile/$userId',
+      ),
+      headers: {
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    return response.statusCode == 200;
+  }
+
+  Future<bool> labProfileExists(int userId) async {
+    final token = await getToken();
+
+    if (token == null) return false;
+
+    final response = await http.get(
+      Uri.parse(
+        '${Constants.apiBaseUrl}/lab/profile/$userId',
+      ),
+      headers: {
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    return response.statusCode == 200;
   }
 }

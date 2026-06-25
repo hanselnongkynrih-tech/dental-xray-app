@@ -185,13 +185,117 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
 
           const Divider(),
 
-          _menuItem(Icons.straighten, "Straightening Teeth (Braces)", context),
-          _menuItem(Icons.child_care, "Pediatric Dentistry", context),
-          _menuItem(Icons.healing, "Gum Specialist (Periodontist)", context),
-          _menuItem(Icons.medical_services, "Root Canal Specialist", context),
-          _menuItem(Icons.build, "Restoration (Dentist)", context),
-          _menuItem(Icons.science, "Oral & Maxillofacial Pathology", context),
-          _menuItem(Icons.biotech, "Oral & Maxillofacial Radiology", context),
+          _menuItem(
+            Icons.healing,
+            "Gum Specialist (Periodontist)",
+            context,
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const BookAppointmentScreen(
+                    specialization: "Gum Specialist (Periodontist)",
+                  ),
+                ),
+              );
+            },
+          ),
+
+          _menuItem(
+            Icons.child_care,
+            "Pediatric Dentistry",
+            context,
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const BookAppointmentScreen(
+                    specialization: "Pediatric Dentistry",
+                  ),
+                ),
+              );
+            },
+          ),
+
+          _menuItem(
+            Icons.child_care,
+            "Gum Specialist (Periodontist)",
+            context,
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const BookAppointmentScreen(
+                    specialization: "Gum Specialist (Periodontist)",
+                  ),
+                ),
+              );
+            },
+          ),
+
+          _menuItem(
+            Icons.child_care,
+            "Root Canal Specialist",
+            context,
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const BookAppointmentScreen(
+                    specialization: "Root Canal Specialist",
+                  ),
+                ),
+              );
+            },
+          ),
+
+          _menuItem(
+            Icons.child_care,
+            "Restoration (Dentist)",
+            context,
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const BookAppointmentScreen(
+                    specialization: "Restoration (Dentist)",
+                  ),
+                ),
+              );
+            },
+          ),
+
+          _menuItem(
+            Icons.child_care,
+            "Oral & Maxillofacial Pathology",
+            context,
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const BookAppointmentScreen(
+                    specialization: "Oral & Maxillofacial Pathology",
+                  ),
+                ),
+              );
+            },
+          ),
+
+          _menuItem(
+            Icons.child_care,
+            "Oral & Maxillofacial Radiology",
+            context,
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const BookAppointmentScreen(
+                    specialization: "Oral & Maxillofacial Radiology",
+                  ),
+                ),
+              );
+            },
+          ),
 
           const Divider(),
 

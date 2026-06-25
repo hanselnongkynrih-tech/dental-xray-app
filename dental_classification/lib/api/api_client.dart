@@ -276,6 +276,25 @@ class ApiClient {
     }
   }
 
+  Future<Map<String, dynamic>> getLabDashboard(int labId) async {
+    final headers = await _buildHeaders();
+
+    final url = Uri.parse(
+      '${Constants.apiBaseUrl}/lab/dashboard/$labId',
+    );
+
+    final response = await http.get(
+      url,
+      headers: headers,
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Failed to load lab dashboard');
+    }
+  }
+
   Future<List<dynamic>> getDoctorResults(int doctorId) async {
     final headers = await _buildHeaders();
 
@@ -380,19 +399,28 @@ class ApiClient {
       throw Exception("Failed to load doctor appointments");
     }
   }
-  // ✏️ Update appointment status
 
-  Future<void> updateAppointmentStatus({
+  // ✏️ Update appointment status
+  Future<bool> updateAppointmentStatus({
     required int appointmentId,
     required String status,
   }) async {
-    await http.put(
+
+    final token =
+    await AuthService().getToken();
+
+    final response = await http.put(
       Uri.parse(
-        "${Constants.apiBaseUrl}/appointments/update-status"
-            "?appointment_id=$appointmentId&status=$status",
+        '${Constants.apiBaseUrl}/appointments/update-status'
+            '?appointment_id=$appointmentId'
+            '&status=$status',
       ),
-      headers: await _buildHeaders(),
+      headers: {
+        'Authorization': 'Bearer $token',
+      },
     );
+
+    return response.statusCode == 200;
   }
 
 }
