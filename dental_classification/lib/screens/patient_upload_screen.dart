@@ -5,6 +5,8 @@ import 'package:http/http.dart' as http;
 
 import '../services/auth_service.dart';
 import '../utils/constants.dart';
+import 'dart:convert';
+import '../api/api_client.dart';
 
 class PatientUploadScreen extends StatefulWidget {
   const PatientUploadScreen({super.key});
@@ -66,9 +68,17 @@ class _PatientUploadScreenState extends State<PatientUploadScreen> {
       if (!mounted) return;
 
       if (response.statusCode == 200) {
-        _showMessage("Upload successful ✅");
+
+        final responseData = jsonDecode(responseBody);
+
+        final imageId = responseData["image_id"];
 
         setState(() => _xrayImage = null);
+
+        if (!mounted) return;
+
+        _showDiagnosisOptions(imageId);
+
       } else {
         _showMessage("Upload failed (${response.statusCode}): $responseBody");
       }
@@ -85,6 +95,106 @@ class _PatientUploadScreenState extends State<PatientUploadScreen> {
   void _showMessage(String msg) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(msg)),
+    );
+  }
+
+  void _showDiagnosisOptions(int imageId) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) {
+        return AlertDialog(
+          title: const Text("Upload Successful ✅"),
+
+          content: const Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+
+              Icon(
+                Icons.medical_services,
+                color: Colors.blue,
+                size: 60,
+              ),
+
+              SizedBox(height: 20),
+
+              Text(
+                "How would you like to continue?",
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+
+          actions: [
+
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                icon: const Icon(Icons.smart_toy),
+                label: const Text("Diagnose with AI"),
+                onPressed: () {
+
+                  Navigator.pop(context);
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                        "AI diagnosis will be added next.",
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                icon: const Icon(Icons.person),
+                label: const Text("Send to Doctor"),
+                onPressed: () async {
+
+                  Navigator.pop(context);
+
+                  try {
+
+                    await ApiClient().sendToDoctor(imageId);
+
+                    if (!mounted) return;
+
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          "✅ X-ray sent to doctor successfully.",
+                        ),
+                      ),
+                    );
+
+                  } catch (e) {
+
+                    if (!mounted) return;
+
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(e.toString()),
+                      ),
+                    );
+
+                  }
+
+                },
+              ),
+            ),
+
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text("Close"),
+            ),
+          ],
+        );
+      },
     );
   }
 

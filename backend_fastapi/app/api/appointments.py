@@ -53,11 +53,22 @@ async def get_my_appointments(current_user=Depends(get_current_user)):
 
 @router.get("/appointments/doctor")
 async def get_doctor_appointments(current_user=Depends(get_current_user)):
-    query = appointments.select().where(
-        appointments.c.doctor_id == current_user.id
+
+    rows = await database.fetch_all(
+        """
+        SELECT
+            a.*,
+            u.full_name AS patient_name
+        FROM appointments a
+        JOIN users u
+            ON a.patient_id = u.id
+        WHERE a.doctor_id = :doctor_id
+        ORDER BY a.date, a.time
+        """,
+        {"doctor_id": current_user.id},
     )
-    result = await database.fetch_all(query)
-    return result
+
+    return [dict(r) for r in rows]
 
 @router.put("/appointments/update-status")
 async def update_appointment_status(

@@ -35,11 +35,10 @@ async def get_doctor_dashboard(current_user=Depends(get_current_user)):
     # ✅ REPORTS (JOIN)
     # ===============================
     reports = await database.fetch_all("""
-        SELECT cr.*
-        FROM classification_results cr
-        JOIN images i ON cr.image_id = i.id
-        WHERE i.doctor_user_id = :id
-    """, {"id": current_user.id})
+        SELECT lr.*
+        FROM lab_results lr
+        WHERE lr.doctor_user_id = :id
+        """, {"id": current_user.id})
 
     return {
         "patients": len(patients),

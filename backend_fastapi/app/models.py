@@ -1,4 +1,17 @@
-from sqlalchemy import DateTime, Table, Column, Integer, String, ForeignKey, Float, JSON, Date
+from sqlalchemy import (
+    Boolean,
+    DateTime,
+    Table,
+    Column,
+    Integer,
+    String,
+    ForeignKey,
+    Float,
+    JSON,
+    Date,
+    Text,
+    Boolean,
+)
 from datetime import datetime  # make sure this exists at top
 from .database import metadata
 
@@ -108,6 +121,17 @@ images = Table(
     Column("lab_user_id", Integer, ForeignKey("users.id")),
     Column("status", String, default="uploaded"),
     Column("assigned_to", String, default="doctor"),
+
+    ## 🔥 NEW FIELDS
+    Column("request_type", String, nullable=True),
+
+    Column("priority", String, default="Normal"),
+
+    Column("doctor_notes", Text, nullable=True),
+
+    Column("lab_status", String, default="not_sent"),
+
+    Column("created_at", DateTime, default=datetime.utcnow),
 )
 
 classification_results = Table(
@@ -129,6 +153,7 @@ lab_results = Table(
     Column("patient_user_id", Integer, ForeignKey("users.id")),
     Column("doctor_user_id", Integer, ForeignKey("users.id")),
     Column("file_path", String, nullable=False),
+    Column("created_at", DateTime, default=datetime.utcnow),
 )
 
 files = Table(
@@ -146,18 +171,35 @@ diagnosis_reports = Table(
     "diagnosis_reports",
     metadata,
 
-    Column("id", Integer, primary_key=True, index=True),
+    Column("id", Integer, primary_key=True),
 
-    Column("image_id", Integer, ForeignKey("images.id")),
+    Column("image_id", Integer, ForeignKey("images.id"), nullable=False),
 
-    Column("result", String, nullable=True),
+    # manual / ai / lab
+    Column("diagnosis_type", String, nullable=False),
+
+    # Diagnosis
+    Column("diagnosis", Text, nullable=True),
+
+    # AI only
     Column("confidence", Float, nullable=True),
 
-    Column("doctor_comment", String, nullable=True),
+    # Doctor fields
+    Column("prescription", Text, nullable=True),
+    Column("treatment_plan", Text, nullable=True),
+    Column("notes", Text, nullable=True),
 
-    Column("status", String, default="pending"),  # pending → completed → reviewed
+    # Creator
+    Column("doctor_user_id", Integer, ForeignKey("users.id"), nullable=True),
+    Column("lab_user_id", Integer, ForeignKey("users.id"), nullable=True),
 
-    Column("created_at", DateTime, default=datetime.utcnow)
+    # Review status
+    Column("reviewed", Boolean, default=False),
+
+    # Workflow status
+    Column("status", String, default="completed"),
+
+    Column("created_at", DateTime, default=datetime.utcnow),
 )
 
 appointments = Table(

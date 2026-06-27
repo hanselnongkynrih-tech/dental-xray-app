@@ -1,9 +1,9 @@
-from app.api import images
+from app.api import diagnosis, images
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
 from .database import engine, database, metadata
-from .api import auth, users, doctor_profile, patient_profile, lab_profile, results, images, lab_results, ml_predict, patient_dashboard, doctor_dashboard, appointments
+from .api import auth, users, doctor_profile, patient_profile, lab_profile, results,images, lab_results, ml_predict, patient_dashboard, doctor_dashboard, appointments, diagnosis
 
 metadata.create_all(bind=engine)
 
@@ -22,6 +22,7 @@ app.include_router(images.router)
 app.include_router(lab_results.router)
 app.include_router(ml_predict.router)
 app.include_router(appointments.router)
+app.include_router(diagnosis.router)
 # serve uploaded images
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 

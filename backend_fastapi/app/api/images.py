@@ -142,6 +142,53 @@ async def delete_image(
 
     return {"message": "Image deleted"}
 
+# ===============================
+# ✅ PATIENT: SEND TO DOCTOR
+# ===============================
+@router.put("/send-to-doctor/{image_id}")
+async def send_to_doctor(
+    image_id: int,
+    current_user: UserOut = Depends(get_current_user),
+):
+    if current_user.role != "patient":
+        raise HTTPException(
+            status_code=403,
+            detail="Only patients can send to doctor",
+        )
+
+    image = await database.fetch_one(
+        """
+        SELECT *
+        FROM images
+        WHERE id = :image_id
+        AND user_id = :user_id
+        """,
+        {
+            "image_id": image_id,
+            "user_id": current_user.id,
+        },
+    )
+
+    if not image:
+        raise HTTPException(
+            status_code=404,
+            detail="Image not found",
+        )
+
+    await database.execute(
+        """
+        UPDATE images
+        SET status = 'pending_doctor'
+        WHERE id = :image_id
+        """,
+        {
+            "image_id": image_id,
+        },
+    )
+
+    return {
+        "message": "Image sent to doctor successfully"
+    }
 
 # ===============================
 # ✅ DOCTOR: SEND IMAGE TO LAB
@@ -149,35 +196,62 @@ async def delete_image(
 @router.post("/send-to-lab")
 async def send_to_lab(
     image_id: int,
-    lab_user_id: int,   # ✅ changed
-    current_user: UserOut = Depends(get_current_user)
+    lab_user_id: int,
+        request_type: str = "General Dental Analysis",
+        priority: str = "Normal",
+        doctor_notes: str = "",
+        current_user: UserOut = Depends(get_current_user)
 ):
+    # 🔐 Only doctor can send
     if current_user.role != "doctor":
-        raise HTTPException(status_code=403, detail="Only doctors can send to lab")
+        raise HTTPException(
+            status_code=403,
+            detail="Only doctors can send to lab"
+        )
 
-    # 🔥 Validate lab user exists AND is actually a lab
+    # ✅ Validate lab user
     lab_user = await database.fetch_one(
         query="""
-        SELECT id FROM users
-        WHERE id = :lab_user_id AND role = 'lab'
+        SELECT id
+        FROM users
+        WHERE id = :lab_user_id
+        AND role = 'lab'
         """,
-        values={"lab_user_id": lab_user_id}
+        values={
+            "lab_user_id": lab_user_id
+        }
     )
 
     if not lab_user:
-        raise HTTPException(status_code=400, detail="Invalid lab user")
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid lab user"
+        )
 
-    # 🔥 Update image
-    query = images.update().where(images.c.id == image_id).values(
+    # ✅ Update image workflow
+    query = images.update().where(
+        images.c.id == image_id
+    ).values(
         lab_user_id=lab_user_id,
+
         assigned_to="lab",
-        status="sent_to_lab"
+
+        status="sent_to_lab",
+
+        request_type=request_type,
+
+        priority=priority,
+
+        doctor_notes=doctor_notes,
+
+        lab_status="pending"
     )
 
     await database.execute(query)
 
-    return {"message": "Image sent to lab"}
-
+    return {
+        "message": "Image sent to lab successfully"
+    }
 
 # ===============================
 # ✅ LAB: GET ASSIGNED IMAGES

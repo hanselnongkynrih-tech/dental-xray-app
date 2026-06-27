@@ -5,9 +5,14 @@ import 'package:http/http.dart' as http;
 import '../services/auth_service.dart';
 import '../utils/constants.dart';
 import 'dart:io';
+import 'package:dio/dio.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:open_filex/open_filex.dart';
 
 class ApiClient {
   final AuthService _authService = AuthService();
+
+  final Dio _dio = Dio();
 
   // 🔐 Build headers with token
   Future<Map<String, String>> _buildHeaders() async {
@@ -132,6 +137,21 @@ class ApiClient {
     return null;
   }
 
+  Future<List<dynamic>> getPatientReports() async {
+    final headers = await _buildHeaders();
+
+    final response = await http.get(
+      Uri.parse("${Constants.apiBaseUrl}/reports"),
+      headers: headers,
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    }
+
+    throw Exception("Failed to load reports");
+  }
+
   Future<Map<String, dynamic>?> getLabProfile(int userId) async {
     final headers = await _buildHeaders();
     final url = Uri.parse('${Constants.apiBaseUrl}/lab/profile/$userId');
@@ -234,17 +254,29 @@ class ApiClient {
   Future<void> sendToLab({
     required int imageId,
     required int labUserId,
+    required String requestType,
+    required String priority,
+    required String doctorNotes,
   }) async {
+
     final headers = await _buildHeaders();
 
     final url = Uri.parse(
-      '${Constants.apiBaseUrl}/images/send-to-lab?image_id=$imageId&lab_user_id=$labUserId',
+      '${Constants.apiBaseUrl}/images/send-to-lab'
+          '?image_id=$imageId'
+          '&lab_user_id=$labUserId'
+          '&request_type=${Uri.encodeComponent(requestType)}'
+          '&priority=${Uri.encodeComponent(priority)}'
+          '&doctor_notes=${Uri.encodeComponent(doctorNotes)}',
     );
 
-    final response = await http.post(url, headers: headers);
+    final response = await http.post(
+      url,
+      headers: headers,
+    );
 
     if (response.statusCode != 200) {
-      throw Exception('Failed to send to lab');
+      throw Exception(response.body);
     }
   }
 
@@ -306,6 +338,25 @@ class ApiClient {
       return jsonDecode(response.body);
     } else {
       throw Exception('Failed to load lab results');
+    }
+  }
+
+  Future<Map<String, dynamic>> getReportDetails(int imageId) async {
+    final headers = await _buildHeaders();
+
+    final url = Uri.parse(
+      '${Constants.apiBaseUrl}/lab-results/report-details/$imageId',
+    );
+
+    final response = await http.get(
+      url,
+      headers: headers,
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Failed to load report details');
     }
   }
 
@@ -421,6 +472,90 @@ class ApiClient {
     );
 
     return response.statusCode == 200;
+  }
+
+  Future<void> downloadLabReport(int imageId) async {
+
+    final token = await _authService.getToken();
+
+    if (token == null || token.isEmpty) {
+      throw Exception("No authentication token found.");
+    }
+
+    final directory = await getTemporaryDirectory();
+
+    final savePath =
+        "${directory.path}/lab_report_$imageId.jpg";
+
+    await _dio.download(
+      "${Constants.apiBaseUrl}/lab-results/download/$imageId",
+      savePath,
+      options: Options(
+        headers: {
+          "Authorization": "Bearer $token",
+        },
+        responseType: ResponseType.bytes,
+      ),
+    );
+
+    final result = await OpenFilex.open(savePath);
+
+    if (result.type != ResultType.done) {
+      throw Exception(result.message);
+    }
+  }
+
+  // ===========================
+// 👨‍⚕️ MANUAL DIAGNOSIS
+// ===========================
+  Future<void> saveManualDiagnosis({
+    required int imageId,
+    required String diagnosis,
+    required String prescription,
+    required String treatmentPlan,
+    required String notes,
+  }) async {
+
+    final headers = await _buildHeaders();
+
+    final response = await http.post(
+      Uri.parse(
+        "${Constants.apiBaseUrl}/diagnosis/manual",
+      ),
+      headers: headers,
+      body: jsonEncode({
+        "image_id": imageId,
+        "diagnosis": diagnosis,
+        "prescription": prescription,
+        "treatment_plan": treatmentPlan,
+        "notes": notes,
+      }),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception(response.body);
+    }
+  }
+
+  // ===========================
+// 👨‍⚕️ SEND TO DOCTOR
+// ===========================
+  Future<void> sendToDoctor(int imageId) async {
+
+    final headers = await _buildHeaders();
+
+    final url = Uri.parse(
+      "${Constants.apiBaseUrl}/images/send-to-doctor/$imageId",
+    );
+
+    final response = await http.put(
+      url,
+      headers: headers,
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception("Failed to send image to doctor");
+    }
   }
 
 }

@@ -125,3 +125,32 @@ class AppointmentOut(BaseModel):
 
     class Config:
         from_attributes = True
+
+# ===========================
+# DIAGNOSIS
+# ===========================
+
+class ManualDiagnosisCreate(BaseModel):
+    image_id: int
+    diagnosis: str
+    prescription: Optional[str] = None
+    treatment_plan: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class DiagnosisResponse(BaseModel):
+    id: int
+    image_id: int
+    diagnosis_type: str
+    diagnosis: Optional[str] = None
+    confidence: Optional[float] = None
+    prescription: Optional[str] = None
+    treatment_plan: Optional[str] = None
+    notes: Optional[str] = None
+    doctor_user_id: Optional[int] = None
+    lab_user_id: Optional[int] = None
+    reviewed: bool
+    status: str
+
+    class Config:
+        from_attributes = True

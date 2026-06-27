@@ -45,6 +45,12 @@ dependencies:
 
   image_picker: ^1.0.7  # <-- REQUIRED
 
+  dio: ^5.9.0
+  path_provider: ^2.1.5
+  open_filex: ^4.7.0
+
+  pdf: ^3.11.3
+
 
 
   # The following adds the Cupertino Icons font to your application.

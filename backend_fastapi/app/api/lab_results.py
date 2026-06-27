@@ -1,4 +1,5 @@
 from fastapi import APIRouter, UploadFile, File, Form, Depends, HTTPException
+from fastapi.responses import FileResponse
 from pathlib import Path
 from uuid import uuid4
 
@@ -110,14 +111,23 @@ async def get_lab_results_full(
         raise HTTPException(status_code=403, detail="Only doctor allowed")
 
     query = """
-SELECT 
+SELECT
     i.id AS image_id,
     i.user_id AS patient_user_id,
     u.full_name AS patient_name,
     pp.token_number,
+
     i.image_path,
+
     lr.file_path,
-    i.status
+
+    i.status,
+
+    i.request_type,
+
+    i.priority,
+
+    i.doctor_notes
     FROM images i
     JOIN users u ON i.user_id = u.id
     LEFT JOIN patient_profiles pp ON pp.user_id = u.id
@@ -131,3 +141,110 @@ SELECT
     )
 
     return [dict(row) for row in rows]
+
+# ==========================================
+# REPORT DETAILS (Doctor / Patient)
+# ==========================================
+@router.get("/report-details/{image_id}")
+async def get_report_details(
+    image_id: int,
+    current_user=Depends(get_current_user)
+):
+    query = """
+    SELECT
+        i.id AS image_id,
+
+        u.full_name AS patient_name,
+
+        pp.token_number,
+
+        i.image_path AS original_xray,
+
+        lr.file_path AS lab_report,
+
+        i.request_type,
+
+        i.priority,
+
+        i.doctor_notes,
+
+        i.status,
+
+        dr.result,
+
+        dr.confidence
+
+    FROM images i
+
+    JOIN users u
+        ON i.user_id = u.id
+
+    LEFT JOIN patient_profiles pp
+        ON pp.user_id = u.id
+
+    LEFT JOIN lab_results lr
+        ON lr.image_id = i.id
+
+    LEFT JOIN diagnosis_reports dr
+        ON dr.image_id = i.id
+
+    WHERE i.id = :image_id
+    """
+
+    report = await database.fetch_one(
+        query=query,
+        values={
+            "image_id": image_id
+        }
+    )
+
+    if not report:
+        raise HTTPException(
+            status_code=404,
+            detail="Report not found"
+        )
+
+    return dict(report)
+
+# ==========================================
+# DOWNLOAD LAB REPORT
+# ==========================================
+@router.get("/download/{image_id}")
+async def download_lab_report(
+    image_id: int,
+    current_user=Depends(get_current_user)
+):
+    query = """
+    SELECT file_path
+    FROM lab_results
+    WHERE image_id = :image_id
+    ORDER BY id DESC
+    LIMIT 1
+    """
+
+    report = await database.fetch_one(
+        query=query,
+        values={
+            "image_id": image_id
+        }
+    )
+
+    if not report:
+        raise HTTPException(
+            status_code=404,
+            detail="Lab report not found"
+        )
+
+    file_path = Path(report["file_path"])
+
+    if not file_path.exists():
+        raise HTTPException(
+            status_code=404,
+            detail="File does not exist"
+        )
+
+    return FileResponse(
+        path=file_path,
+        filename=file_path.name,
+        media_type="application/octet-stream",
+    )

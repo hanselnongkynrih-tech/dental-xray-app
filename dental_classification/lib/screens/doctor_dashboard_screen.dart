@@ -208,7 +208,7 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                   children: [
 
                     Text(
-                      "Patient ID: ${appointment['patient_id']}",
+                      "Patient: ${appointment['patient_name']}",
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,

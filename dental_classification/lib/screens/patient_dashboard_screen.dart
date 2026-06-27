@@ -5,9 +5,10 @@ import '../services/auth_service.dart';
 import 'patient_upload_screen.dart';
 import '../api/api_client.dart';
 //import 'login_screen.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'book_appointment_screen.dart';
 import 'patient_appointments_screen.dart';
+import 'report_details_screen.dart';
+import 'patient_reports_screen.dart';
 
 class PatientDashboardScreen extends StatefulWidget {
   const PatientDashboardScreen({super.key});
@@ -66,7 +67,7 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
     );
   }
 
-  void openReport(int imageId) async {
+  /*void openReport(int imageId) async {
     final url = Uri.parse(
         "http://10.0.2.2:8000/images/download-report/$imageId",
     );
@@ -77,7 +78,7 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
     )) {
       debugPrint("Could not open report");
     }
-  }
+  }*/
 
   @override
   Widget build(BuildContext context) {
@@ -310,7 +311,19 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
             );
           }),
 
-          _menuItem(Icons.description, "My Reports", context),
+          _menuItem(
+            Icons.description,
+            "My Reports",
+            context,
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const PatientReportsScreen(),
+                ),
+              );
+            },
+          ),
           _menuItem(Icons.person, "Profile", context),
 
           const Divider(),
@@ -409,11 +422,21 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
               Colors.blue,
             ),
 
-            _StatCard(
-              "Reports",
-              "${dashboardData?['reports'] ?? 0}",
-              Icons.description,
-              Colors.green,
+            GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const PatientReportsScreen(),
+                  ),
+                );
+              },
+              child: _StatCard(
+                "Reports",
+                "${dashboardData?['reports'] ?? 0}",
+                Icons.description,
+                Colors.green,
+              ),
             ),
 
             GestureDetector(
@@ -525,7 +548,14 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
                           padding: const EdgeInsets.only(bottom: 10),
                           child: ElevatedButton(
                             onPressed: () {
-                              openReport(item['image_id']);
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => ReportDetailsScreen(
+                                    imageId: item['image_id'],
+                                  ),
+                                ),
+                              );
                             },
                             child: const Text("View Report"),
                           ),
